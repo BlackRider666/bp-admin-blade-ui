@@ -1,0 +1,11 @@
+@use 'vuetify' with (
+  $body-font-family: 'Assistant' !important,
+  $font-weights: (
+    'medium': 600,
+  )
+);
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@200..800&display=swap');
+
+.v-btn {
+  text-transform: capitalize!important;
+}

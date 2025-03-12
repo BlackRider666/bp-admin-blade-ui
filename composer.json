@@ -1,0 +1,31 @@
+{
+  "name": "black-paradise/admin-blade-ui",
+  "description": "Blade UI for BPAdmin",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vladuslav Manzhos",
+      "email": "loverider2012@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "black-paradise/laravel-admin": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+        "BlackParadise\\AdminBladeUI\\": "src/"
+    },
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "BlackParadise\\AdminBladeUI\\DashboardBladeServiceProvider"
+      ]
+    }
+  }
+}
