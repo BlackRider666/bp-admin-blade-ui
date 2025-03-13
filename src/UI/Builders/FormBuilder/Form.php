@@ -157,12 +157,14 @@ class Form implements FormInterface
             $attributes['method'] = 'POST';
         }
 
-        $actions = array_key_exists('actions', $this->attributes)?
-            $this->attributes['actions']
-            :
-            (new SubmitComponent([
+        if (array_key_exists('actions', $attributes)) {
+            $actions = $this->attributes['actions'];
+            unset($attributes['actions']);
+        } else {
+            $actions = (new SubmitComponent([
                 'label' => $this->attributes['submit_label'],
             ]))->render();
+        }
 
         return view('bpadmin::components.common.form',[
             'attributes' => $attributes,
@@ -180,7 +182,7 @@ class Form implements FormInterface
         $createAttribute = [
             'method' => 'POST',
             'action' => route('bpadmin.'.$this->entityName.'.store'),
-            'actions'      => (new ActionsComponent(['label' => trans('bpadmin::common.forms.create')]))->render(),
+            'actions'      => (new ActionsComponent(['label' => __('bpadmin::common.forms.create')]))->render(),
         ];
         $this->attributes = array_merge($this->attributes,$createAttribute);
 
@@ -195,7 +197,7 @@ class Form implements FormInterface
         $createAttribute = [
             'method' => 'PUT',
             'action' => route('bpadmin.'.$this->entityName.'.update', $this->model->getKey()),
-            'actions'      => (new ActionsComponent(['label' => trans('bpadmin::common.forms.update')]))->render(),
+            'actions'      => (new ActionsComponent(['label' => __('bpadmin::common.forms.update')]))->render(),
         ];
         $this->attributes = array_merge($this->attributes,$createAttribute);
 
