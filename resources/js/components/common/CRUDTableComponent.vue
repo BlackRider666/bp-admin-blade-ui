@@ -113,36 +113,33 @@ export default {
   data() {
     return {
       pagination:
-      {
-        page: this.items.current_page,
-        itemsPerPage: parseInt(this.items.per_page),
-        sortBy: this.filters.sortBy? [{key: this.filters.sortBy, order: this.filters.sortDesc}]: [{key:'id',order:'desc'}],
-      },
+          {
+            page: this.items.current_page,
+            itemsPerPage: parseInt(this.items.per_page),
+            sortBy: this.filters.sortBy? [{key: this.filters.sortBy, order: this.filters.sortDesc}]: [{key:'id',order:'desc'}],
+          },
       search: this.filters.q ? this.filters.q: null,
     }
   },
   methods: {
     deleteItem(id) {
-        this.$refs[`delete-form-${id}`].submit()
+      this.$refs[`delete-form-${id}`].submit()
     },
     searchItems() {
-        let searchForm = this.$refs["search-form"];
-        if (searchForm) {
-            setTimeout(function () {
-                searchForm.submit()
-            },400)
-        }
+      let searchForm = this.$refs["search-form"];
+      if (searchForm) {
+        setTimeout(function () {
+          searchForm.submit()
+        },400)
+      }
     },
     clearSearch() {
-        this.search = null;
-        this.searchItems();
+      this.search = null;
+      this.searchItems();
     },
-  }
+  },
 }
 </script>
 
 <style scoped>
-.sorted {
-  cursor: pointer;
-}
 </style>

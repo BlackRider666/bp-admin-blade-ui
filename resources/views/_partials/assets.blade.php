@@ -6,5 +6,5 @@
     <link rel="font" media="screen, print" href="{{asset('bpadmin/materialdesignicons-webfont.eot')}}">
     <link rel="font" media="screen, print" href="{{asset('bpadmin/materialdesignicons-webfont.woff')}}">
     <link rel="font" media="screen, print" href="{{asset('bpadmin/materialdesignicons-webfont.woff2')}}">
-    <script type="module" crossorigin src="{{asset('bpadmin/admin.js')}}"></script>
+    <script type="module" crossorigin src="{{asset('bpadmin/admin.js')}}" defer></script>
 @endif

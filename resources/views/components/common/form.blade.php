@@ -5,9 +5,9 @@
     @endif
 @endforeach
 >
-{!! csrf_field(); !!}
-@foreach ($fields as $field)
-    {!! $field->render(); !!}
-@endforeach
-{!! $submitBtn !!}
+    {!! csrf_field(); !!}
+    @foreach ($fields as $field)
+        {!! $field->render(); !!}
+    @endforeach
+    {!! $actions !!}
 </v-form>

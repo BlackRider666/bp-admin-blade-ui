@@ -26,7 +26,7 @@ class Table implements TableInterface
 
     public function render(array $options = []): string
     {
-        return view('bpadmin::components.table', [
+        return view('bpadmin::components.common.crud-table', [
             'headers'   =>  $this->headers,
             'items' => $this->items,
             'routes'            =>  $this->routes,

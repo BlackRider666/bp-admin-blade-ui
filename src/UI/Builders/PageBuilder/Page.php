@@ -30,7 +30,7 @@ class Page implements PageInterface
         $html = implode('', $this->components);
         $headers = implode('',$this->headers);
 
-        return view('pages.page',[
+        return view('bpadmin::pages.page',[
             'layout' => $this->layout,
             'title' => $this->title,
             'headers' => $headers,

@@ -11,9 +11,37 @@ To install the package, run the following command:
 ```sh
 composer require black-paradise/admin-blade-ui
 ```
+## Example Vite config
+```js
+export default defineConfig({
+    resolve: {
+        alias: {
+            'vue': 'vue/dist/vue.esm-bundler.js',
+        },
+    },
+    plugins: [
+        laravel({
+            input: [
+                'resources/js/app.js',
+                'resources/js/vendor/bpadmin/main.js', // package file
+                'resources/css/app.css',
+            ],
+            refresh: true,
+        }),
+        vue(),
+    ],
+    build: {
+        rollupOptions: {
+            input: {
+                app: 'resources/js/app.js',                      
+                admin: 'resources/js/vendor/bpadmin/main.js',     // JS for package
+            },
+        },
+    },
+});
+```
 ## Roadmap
 - Support for custom components.
-- Advanced validation handling.
 - Additional customization options for pages.
 
 ## License

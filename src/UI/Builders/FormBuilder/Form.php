@@ -14,10 +14,10 @@ use BlackParadise\AdminBladeUI\UI\Builders\FormBuilder\Inputs\{BelongsToInput,
     IntegerInput,
     PasswordInput,
     StringInput,
-    SubmitInput,
     TextInput,
     TranslatableEditorInput,
     TranslatableInput};
+use BlackParadise\AdminBladeUI\UI\Components\{SubmitComponent, ActionsComponent};
 use BlackParadise\LaravelAdmin\Core\Interfaces\Builders\FormBuilder\FormInterface;
 use BlackParadise\LaravelAdmin\Core\Interfaces\Builders\FormBuilder\Inputs\InputInterface;
 use BlackParadise\LaravelAdmin\Core\Models\BPModel;
@@ -34,7 +34,6 @@ class Form implements FormInterface
         'string'    =>  StringInput::class,
         'text'      =>  TextInput::class,
         'hashed'  =>  PasswordInput::class,
-        'submit'    =>  SubmitInput::class,
         'BelongsTo' =>  BelongsToInput::class,
         'BelongsToMany' =>  BelongsToInput::class,
         //date
@@ -158,10 +157,17 @@ class Form implements FormInterface
             $attributes['method'] = 'POST';
         }
 
-        return view('bpadmin::components.form',[
+        $actions = array_key_exists('actions', $this->attributes)?
+            $this->attributes['actions']
+            :
+            (new SubmitComponent([
+                'label' => $this->attributes['submit_label'],
+            ]))->render();
+
+        return view('bpadmin::components.common.form',[
             'attributes' => $attributes,
             'fields'     => $this->fields,
-            'submitBtn'  => (new SubmitInput(['label' => $this->attributes['submit_label']]))->render(),
+            'actions'  => $actions,
         ])->render();
     }
 
@@ -174,7 +180,7 @@ class Form implements FormInterface
         $createAttribute = [
             'method' => 'POST',
             'action' => route('bpadmin.'.$this->entityName.'.store'),
-            'submit_label' => trans('bpadmin::common.forms.create'),
+            'actions'      => (new ActionsComponent(['label' => trans('bpadmin::common.forms.create')]))->render(),
         ];
         $this->attributes = array_merge($this->attributes,$createAttribute);
 
@@ -189,7 +195,7 @@ class Form implements FormInterface
         $createAttribute = [
             'method' => 'PUT',
             'action' => route('bpadmin.'.$this->entityName.'.update', $this->model->getKey()),
-            'submit_label' => trans('bpadmin::common.forms.update'),
+            'actions'      => (new ActionsComponent(['label' => trans('bpadmin::common.forms.update')]))->render(),
         ];
         $this->attributes = array_merge($this->attributes,$createAttribute);
 

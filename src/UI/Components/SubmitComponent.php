@@ -1,13 +1,11 @@
 <?php
 
-namespace BlackParadise\AdminBladeUI\UI\Builders\FormBuilder\Inputs;
+namespace BlackParadise\AdminBladeUI\UI\Components;
 
-use BlackParadise\LaravelAdmin\Core\Builders\FormBuilder\Inputs\GetTypeTrait;
-use BlackParadise\LaravelAdmin\Core\Interfaces\Builders\FormBuilder\Inputs\InputInterface;
-class SubmitInput implements InputInterface
+use BlackParadise\LaravelAdmin\Core\Interfaces\Components\ComponentInterface;
+
+class SubmitComponent implements ComponentInterface
 {
-    use GetTypeTrait;
-
     private array $attributes = [];
 
     public function __construct(array $attributes = [])
@@ -22,15 +20,10 @@ class SubmitInput implements InputInterface
      */
     public function render(): string
     {
-        $view =  view('bpadmin::components.inputs.submit', [
+        $view =  view('bpadmin::components.common.submit', [
             'attributes' => $this->attributes,
         ]);
 
         return $view->render();
-    }
-
-    public function getRules(): array
-    {
-        return [];
     }
 }

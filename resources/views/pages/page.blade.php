@@ -1,9 +1,9 @@
 @extends('bpadmin::layout.'.$layout)
-@section('title', $page['title'])
+@section('title', $title)
 @section('header')
-    {{$page['title']}}
-    {!! $page['headers'] !!}
+    {{ $title }}
+    {!! $headers !!}
 @endsection
 @section('html')
-    {!! $page['html'] !!}
+    {!! $html !!}
 @endsection

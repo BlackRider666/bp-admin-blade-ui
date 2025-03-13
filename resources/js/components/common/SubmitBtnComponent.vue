@@ -6,7 +6,7 @@
 
 <script>
 export default {
-  name: 'SubmitInput',
+  name: 'SubmitBtnComponent',
   props: {
     label: {
       type: String,

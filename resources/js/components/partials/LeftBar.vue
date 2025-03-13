@@ -1,8 +1,8 @@
 <template>
   <v-navigation-drawer v-model="drawer" permanent color="surface" class="border-e-md">
-    <v-list class="ml-4" density="compact">
+    <v-list class="ml-4" density="compact" v-model:opened="opened">
       <template v-for="(item, key) in items" :key="key">
-        <v-list-group v-if="item.items" v-model="item.active" class="mb-1">
+        <v-list-group v-if="item.items" :value="item.title" class="mb-1">
           <template v-slot:activator="{ props }">
             <v-list-item v-bind="props" :prepend-icon="item.icon" class="pl-5 pr-2 mb-1 rounded-e-xl">
               <v-list-item-title class="font-weight-medium">{{ item.title }}</v-list-item-title>
@@ -40,7 +40,7 @@ export default {
   data() {
     return {
       drawer: true,
-      mini: true,
+      opened: Object.values(this.items).filter((item) => Boolean(item.active)).map((item) => item.title),
     };
   },
 };
@@ -50,10 +50,12 @@ export default {
 .v-list-item {
   border-left: 4px solid transparent;
 }
+
 .active {
   border-left: 4px solid rgb(var(--v-theme-primary));
   background-color: rgb(var(--v-theme-background));
 }
+
 .v-list-group {
   --prepend-width: 0px;
 }
