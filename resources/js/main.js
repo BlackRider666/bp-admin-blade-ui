@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import vuetify from './plugins/vuetify';
 import CRUDLayout from './layout/CRUDLayout.vue';
 import AuthLayout from './layout/AuthLayout.vue';
-import TableComponent from './components/common/CRUDTableComponent.vue';
+import CRUDTableComponent from './components/common/CRUDTableComponent.vue';
 import AppHeader from './components/partials/AppHeader.vue';
 import AppFooter from './components/partials/AppFooter.vue';
 import LeftBar from './components/partials/LeftBar.vue';
@@ -16,6 +16,7 @@ import TranslatableInput from './components/inputs/TranslatableInput.vue';
 import EditorInput from './components/inputs/EditorInput.vue';
 import TranslatableEditorInput from './components/inputs/TranslatableEditorInput.vue';
 import ActionBtnsComponent from "./components/common/ActionBtnsComponent.vue";
+import TableComponent from "./components/common/TableComponent.vue";
 
 const app = createApp({});
 
@@ -23,12 +24,13 @@ app.use(vuetify);
 
 app.component('crud-layout', CRUDLayout);
 app.component('auth-layout', AuthLayout);
-app.component('crud-items', TableComponent);
+app.component('crud-items', CRUDTableComponent);
 app.component('app-header', AppHeader);
 app.component('app-footer', AppFooter);
 app.component('left-bar', LeftBar);
 app.component('submit-btn-component', SubmitBtnComponent);
 app.component('action-btns-component', ActionBtnsComponent);
+app.component('table-component', TableComponent);
 
 app.component('boolean-input', BooleanInput);
 app.component('select-input', SelectInput);
