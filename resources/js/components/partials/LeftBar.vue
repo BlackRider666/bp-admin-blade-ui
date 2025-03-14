@@ -46,7 +46,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .v-list-item {
   border-left: 4px solid transparent;
 }
