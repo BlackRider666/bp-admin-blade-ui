@@ -60,7 +60,7 @@
         "test:coverage": "vendor/bin/pest --coverage --min=60",
         "test:coverage:strict": [
             "vendor/bin/pest --coverage --coverage-clover=coverage.clover.xml --min=60",
-            "php scripts/check-coverage.php coverage.clover.xml scripts/coverage-thresholds.bp-laravel-admin-blade-ui-next.json ."
+            "php scripts/check-coverage.php coverage.clover.xml scripts/coverage-thresholds.bp-laravel-admin-blade-ui.json ."
         ],
         "qa": [
             "@cs:check",

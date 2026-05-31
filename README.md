@@ -1,10 +1,10 @@
 # BPAdmin Blade UI (v3)
 
-Blade + Tailwind CSS + Alpine.js UI layer for [BPAdmin v3](../bp-laravel-admin-next).
+Blade + Tailwind CSS + Alpine.js UI layer for [BPAdmin](../bp-laravel-admin).
 
 ## Installation
 
-This package is installed automatically when you require `black-paradise/laravel-admin-next` with Blade UI.
+This package is installed automatically when you require `black-paradise/laravel-admin` with Blade UI.
 
 After installation, publish the compiled CSS/JS assets:
 
