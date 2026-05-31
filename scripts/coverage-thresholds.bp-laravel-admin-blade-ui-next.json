@@ -1,0 +1,3 @@
+{
+    "Presenters": { "path": "src/Http/Presenters", "min": 60.0 }
+}

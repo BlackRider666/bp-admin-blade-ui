@@ -1,31 +1,72 @@
 {
-  "name": "black-paradise/admin-blade-ui",
-  "description": "Blade UI for BPAdmin",
-  "type": "library",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Vladuslav Manzhos",
-      "email": "loverider2012@gmail.com"
-    }
-  ],
-  "minimum-stability": "stable",
-  "require": {
-    "black-paradise/laravel-admin": "dev-master"
-  },
-  "autoload": {
-    "psr-4": {
-        "BlackParadise\\AdminBladeUI\\": "src/"
+    "name": "black-paradise/admin-blade-ui",
+    "description": "Blade + Tailwind + Alpine.js UI for BPAdmin v3",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vladuslav Manzhos",
+            "email": "loverider2012@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "black-paradise/laravel-admin": "^3.0"
     },
-    "files": [
-      "src/helpers.php"
-    ]
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "BlackParadise\\AdminBladeUI\\DashboardBladeServiceProvider"
-      ]
+    "autoload": {
+        "psr-4": {
+            "BlackParadise\\LaravelAdminBladeUI\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BlackParadise\\LaravelAdminBladeUI\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BlackParadise\\LaravelAdminBladeUI\\BladeUIServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "require-dev": {
+        "laravel/pint": "^1.13",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "larastan/larastan": "^3.0",
+        "orchestra/testbench": "^11.1",
+        "rector/rector": "^2.0",
+        "driftingly/rector-laravel": "^2.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
+    },
+    "scripts": {
+        "cs:check": "vendor/bin/pint --config=pint.json --test src",
+        "cs:fix": "vendor/bin/pint --config=pint.json src",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "rector": "vendor/bin/rector --dry-run --memory-limit=1G",
+        "rector:apply": "vendor/bin/rector --memory-limit=1G",
+        "test": "vendor/bin/pest",
+        "test:arch": "vendor/bin/pest --testsuite=Architecture",
+        "test:coverage": "vendor/bin/pest --coverage --min=60",
+        "test:coverage:strict": [
+            "vendor/bin/pest --coverage --coverage-clover=coverage.clover.xml --min=60",
+            "php scripts/check-coverage.php coverage.clover.xml scripts/coverage-thresholds.bp-laravel-admin-blade-ui-next.json ."
+        ],
+        "qa": [
+            "@cs:check",
+            "@analyse",
+            "@rector",
+            "@test"
+        ]
     }
-  }
 }

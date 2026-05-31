@@ -1,0 +1,43 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract\:\:withMeta\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Instanceof between BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract and BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Method BlackParadise\\LaravelAdminBladeUI\\Http\\Presenters\\BladeEntityPresenter\:\:create\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Method BlackParadise\\LaravelAdminBladeUI\\Http\\Presenters\\BladeEntityPresenter\:\:edit\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Method BlackParadise\\LaravelAdminBladeUI\\Http\\Presenters\\BladeEntityPresenter\:\:index\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Method BlackParadise\\LaravelAdminBladeUI\\Http\\Presenters\\BladeEntityPresenter\:\:show\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
+
+		-
+			message: '#^Variable property access on mixed\.$#'
+			identifier: property.dynamicName
+			count: 1
+			path: src/Http/Presenters/BladeEntityPresenter.php
