@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * Pest bootstrap for bp-laravel-admin-blade-ui-next.
+ * Pest bootstrap for bp-laravel-admin-blade-ui.
  *
  * Architecture tests live under tests/Architecture/ (no app boot).
  * Feature/Integration tests use BlackParadise\LaravelAdminBladeUI\Tests\TestCase

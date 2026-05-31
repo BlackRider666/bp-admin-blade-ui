@@ -17,7 +17,7 @@ final class BladeUIServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Override default JSON presenters with Blade-specific implementations.
-        // Routes remain exclusively in bp-laravel-admin-next.
+        // Routes remain exclusively in bp-laravel-admin.
         $this->app->bind(EntityPresenterInterface::class, BladeEntityPresenter::class);
         $this->app->bind(AuthPresenterInterface::class, BladeAuthPresenter::class);
         $this->app->bind(DashboardPresenterInterface::class, BladeDashboardPresenter::class);
