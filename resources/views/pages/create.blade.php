@@ -36,24 +36,109 @@
                             $embeddedDefClass = $field->embeddedDefinition();
                             $embeddedDef      = app(\BlackParadise\LaravelAdmin\Core\EntityDefinitionRegistry::class)
                                 ->get((new $embeddedDefClass())->resolveName());
+                            $hostModelClass   = $definition->model ?? null;
                             $embeddedFields   = array_values(array_filter(
                                 $embeddedDef->fields(),
-                                fn ($f) => $f->visibleOnForm(),
+                                function ($f) use ($hostModelClass) {
+                                    if (!$f->visibleOnForm()) {
+                                        return false;
+                                    }
+                                    // skip FK back to host — auto-assigned on save
+                                    if ($hostModelClass
+                                        && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
+                                        && $f->relationKind() === 'belongsTo'
+                                        && $f->target() === $hostModelClass) {
+                                        return false;
+                                    }
+                                    return true;
+                                },
                             ));
-                            $embeddedPrefix   = $field->name();
-                            $oldValues        = old($embeddedPrefix, []);
+                            $relationKind   = $field->relationKind();
+                            $isMany         = in_array($relationKind, ['hasMany', 'morphMany', 'belongsToMany'], true);
+                            $embeddedPrefix = $field->name();
+                            $oldItems       = old($embeddedPrefix);
                         @endphp
                         <fieldset class="border border-bp-border-soft rounded-xl p-4 mb-4">
                             <legend class="text-sm font-medium text-bp-gray-500 px-2">{{ $field->label() }}</legend>
-                            @foreach($embeddedFields as $ef)
-                                @include('bpadmin::components.field-input', [
-                                    'field'      => $ef,
-                                    'value'      => $oldValues[$ef->name()] ?? null,
-                                    'errors'     => $errors,
-                                    'definition' => $embeddedDef,
-                                    'namePrefix' => $embeddedPrefix,
-                                ])
-                            @endforeach
+
+                            @if($isMany)
+                                @php $items = is_array($oldItems) ? array_values($oldItems) : []; @endphp
+                                <div x-data="bpRepeater({{ count($items) }})" data-bp-repeater="{{ $embeddedPrefix }}">
+                                    {{-- Rows submitted before a validation error are re-rendered here
+                                         so the user does not lose them; new rows are cloned client-side
+                                         from the <template> below. --}}
+                                    <div x-ref="rows" class="space-y-3">
+                                        @foreach($items as $idx => $item)
+                                            <div data-bp-embed-row
+                                                 class="relative border border-bp-border-soft/60 rounded-lg p-3">
+                                                <button type="button"
+                                                        @click="$el.closest('[data-bp-embed-row]').remove()"
+                                                        class="absolute top-2 right-2 text-bp-muted hover:text-red-400 transition-colors"
+                                                        title="Remove">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                                @foreach($embeddedFields as $ef)
+                                                    @include('bpadmin::components.field-input', [
+                                                        'field'      => $ef,
+                                                        'value'      => is_array($item) ? ($item[$ef->name()] ?? null) : null,
+                                                        'errors'     => $errors,
+                                                        'definition' => $embeddedDef,
+                                                        'namePrefix' => $embeddedPrefix . '[' . $idx . ']',
+                                                    ])
+                                                @endforeach
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Blank-row blueprint. `__ROW__` is substituted with the next
+                                         index when bpRepeater.add() clones this template. --}}
+                                    <template x-ref="row">
+                                        <div data-bp-embed-row
+                                             class="relative border border-bp-border-soft/60 rounded-lg p-3 mt-3">
+                                            <button type="button"
+                                                    @click="$el.closest('[data-bp-embed-row]').remove()"
+                                                    class="absolute top-2 right-2 text-bp-muted hover:text-red-400 transition-colors"
+                                                    title="Remove">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+                                            @foreach($embeddedFields as $ef)
+                                                @include('bpadmin::components.field-input', [
+                                                    'field'      => $ef,
+                                                    'value'      => null,
+                                                    'errors'     => $errors,
+                                                    'definition' => $embeddedDef,
+                                                    'namePrefix' => $embeddedPrefix . '[__ROW__]',
+                                                ])
+                                            @endforeach
+                                        </div>
+                                    </template>
+
+                                    <button type="button"
+                                            data-bp-repeater-add
+                                            @click="add()"
+                                            class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-bp-primary hover:text-bp-primary/80 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        {{ __('bpadmin::common.buttons.add') }}
+                                    </button>
+                                </div>
+                            @else
+                                @php $oldValues = is_array($oldItems) ? $oldItems : []; @endphp
+                                @foreach($embeddedFields as $ef)
+                                    @include('bpadmin::components.field-input', [
+                                        'field'      => $ef,
+                                        'value'      => $oldValues[$ef->name()] ?? null,
+                                        'errors'     => $errors,
+                                        'definition' => $embeddedDef,
+                                        'namePrefix' => $embeddedPrefix,
+                                    ])
+                                @endforeach
+                            @endif
                         </fieldset>
                     @else
                         @include('bpadmin::components.field-input', [

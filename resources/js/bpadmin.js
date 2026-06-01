@@ -146,6 +146,29 @@ function register(A) {
     },
   }))
 
+  // Repeater for hasMany-embed relations on create/edit forms. Clones the
+  // blank-row <template> (x-ref="row"), substituting the `__ROW__` index
+  // placeholder with a monotonically increasing index so each row submits as a
+  // distinct list element (histories[0][...], histories[1][...]). Alpine's
+  // mutation observer initialises any x-data inside the cloned row.
+  A.data('bpRepeater', (startIndex = 0) => ({
+    index: startIndex,
+    add() {
+      const tpl = this.$refs.row
+      const rows = this.$refs.rows
+      if (!tpl || !rows) return
+      const html = tpl.innerHTML.split('__ROW__').join(String(this.index))
+      const wrap = document.createElement('div')
+      wrap.innerHTML = html.trim()
+      const node = wrap.firstElementChild
+      if (!node) return
+      rows.appendChild(node)
+      this.index++
+      const focusable = node.querySelector('input:not([type=hidden]),textarea,select')
+      if (focusable) focusable.focus()
+    },
+  }))
+
   A.data('bpPalette', () => ({
     query: '',
     index: 0,

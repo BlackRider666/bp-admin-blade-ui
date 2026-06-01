@@ -25,6 +25,7 @@
                 records.
             </p>
         </div>
+        @if($definition->isCreatable())
         <a href="{{ route('bpadmin.entity.create', ['entity' => $definition->name()]) }}"
            data-bp-new
            title="Press N to create"
@@ -35,6 +36,7 @@
             <span>{{ __('bpadmin::common.buttons.new', ['entity' => \Illuminate\Support\Str::singular(bp_entity_label($definition))]) }}</span>
             <kbd class="hidden sm:inline-flex items-center rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono-bp">N</kbd>
         </a>
+        @endif
     </div>
 
     @include('bpadmin::components.table', [
