@@ -175,10 +175,21 @@
         @break
 
     @case('enum')
-        @php $enumLabel = ($field->meta()['options'][$value] ?? $value); @endphp
-        @if($value !== null && $value !== '')
+        @php
+            $enumOptions = $field->meta()['options'] ?? [];
+            $isMulti     = (bool) ($field->meta()['multiple'] ?? false);
+        @endphp
+        @if($isMulti && is_array($value) && count($value))
+            <span class="inline-flex flex-wrap gap-1">
+                @foreach($value as $item)
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-bp-gray-100 text-bp-gray-700">
+                        {{ $enumOptions[$item] ?? $item }}
+                    </span>
+                @endforeach
+            </span>
+        @elseif(!$isMulti && $value !== null && $value !== '')
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-bp-gray-100 text-bp-gray-700">
-                {{ $enumLabel }}
+                {{ $enumOptions[$value] ?? $value }}
             </span>
         @else
             <span class="text-bp-gray-400 text-xs">—</span>
