@@ -1,15 +1,9 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Call to an undefined method BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract\:\:withMeta\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Http/Presenters/BladeEntityPresenter.php
-
-		-
-			message: '#^Instanceof between BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract and BlackParadise\\CoreAdmin\\Domain\\Contracts\\Fields\\RelationFieldContract will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 3
 			path: src/Http/Presenters/BladeEntityPresenter.php
 
 		-
@@ -37,7 +31,7 @@ parameters:
 			path: src/Http/Presenters/BladeEntityPresenter.php
 
 		-
-			message: '#^Variable property access on mixed\.$#'
-			identifier: property.dynamicName
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
 			count: 1
 			path: src/Http/Presenters/BladeEntityPresenter.php
