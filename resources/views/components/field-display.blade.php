@@ -120,7 +120,12 @@
             $relationName = $field->relationName();
             $displayField = $field->displayField();
             $relation = $record->relation($relationName);
-            $displayValue = $relation[$displayField] ?? $value;
+            // Use the shared resolver so a translatable display field
+            // (e.g. City->name = ['en'=>…, 'uk'=>…]) renders as a locale
+            // string instead of reaching {{ }} as a raw array.
+            $displayValue = $relation !== null
+                ? $bpDisplayRelation($relation, $displayField)
+                : (string) ($value ?? '');
         @endphp
         {{ $displayValue }}
         @break
