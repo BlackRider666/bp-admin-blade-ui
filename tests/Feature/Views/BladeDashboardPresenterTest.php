@@ -40,4 +40,28 @@ final class BladeDashboardPresenterTest extends TestCase
         self::assertStringContainsString('Welcome back to', $body);
         self::assertStringContainsString('Test Admin', $body);
     }
+
+    public function test_index_does_not_render_entity_navigation_tiles(): void
+    {
+        $user = new \Illuminate\Foundation\Auth\User();
+        $user->id = 1;
+        $user->name = 'Test Admin';
+        $user->email = 'admin@example.com';
+        $this->actingAs($user);
+
+        $presenter = new BladeDashboardPresenter();
+
+        // The dashboard must NOT surface registered definitions as clickable
+        // tiles — that leaked embed targets / discriminated supertypes that are
+        // not meant to be navigated directly. Navigation belongs to the sidebar.
+        $response = $presenter->index([
+            ['name' => 'leaky_supertype', 'label' => 'Leaky Supertype'],
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+
+        $body = (string) $response->getContent();
+        self::assertStringNotContainsString('leaky_supertype', $body);
+        self::assertStringNotContainsString('Leaky Supertype', $body);
+    }
 }
