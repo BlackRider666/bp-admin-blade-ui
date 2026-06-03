@@ -1,32 +1,54 @@
 @php
-    $appName   = config('bpadmin.name', 'BPAdmin');
-    $logo      = config('bpadmin.logo');
-    $navGroups = config('bpadmin.nav_groups', []);
-    $registry  = app(\BlackParadise\LaravelAdmin\Core\EntityDefinitionRegistry::class);
-    $allDefs   = $registry->all();
+    $appName  = config('bpadmin.name', 'BPAdmin');
+    $logo     = config('bpadmin.logo');
+    $registry = app(\BlackParadise\LaravelAdmin\Core\EntityDefinitionRegistry::class);
+
+    // The sidebar menu is driven purely by config('bpadmin.menu'): an ordered
+    // list of groups — each ['label' => ..., 'icon' => ..., 'entities' => [...]].
+    // Only the listed entities are rendered, in the exact order and grouping
+    // declared in the config (no auto-discovery dump). Entity names that are
+    // not registered are silently skipped. The legacy 'nav_groups' key is
+    // accepted as a fallback alias for backwards compatibility.
+    //
+    // Each 'entities' entry is either a bare entity name (inherits the group
+    // icon, label from the entity definition) or an array
+    // ['entity' => ..., 'icon' => ..., 'label' => ...] to override that single
+    // item's icon and/or label. Group and item labels are localized via
+    // bp_menu_label() — a literal string or a translation key both work.
+    $menu = config('bpadmin.menu', config('bpadmin.nav_groups', []));
 
     $groupedEntities   = [];
-    $ungroupedEntities = $allDefs;
+    $ungroupedEntities = [];
 
-    if (!empty($navGroups)) {
-        $usedNames = [];
-        foreach ($navGroups as $group) {
+    if (!empty($menu)) {
+        foreach ($menu as $group) {
+            $groupIcon = $group['icon'] ?? null;
             $groupDefs = [];
-            foreach ($group['entities'] as $entityName) {
-                foreach ($allDefs as $def) {
-                    if ($def->name() === $entityName) {
-                        $groupDefs[] = $def;
-                        $usedNames[] = $entityName;
-                    }
+            foreach (($group['entities'] ?? []) as $entry) {
+                $entityName = is_array($entry) ? ($entry['entity'] ?? null) : $entry;
+                $itemIcon   = is_array($entry) ? ($entry['icon'] ?? $groupIcon) : $groupIcon;
+                $itemLabel  = is_array($entry) ? ($entry['label'] ?? null) : null;
+
+                if ($entityName !== null && $registry->has($entityName)) {
+                    $groupDefs[] = [
+                        'def'   => $registry->get($entityName),
+                        'icon'  => $itemIcon,
+                        'label' => $itemLabel,
+                    ];
                 }
             }
             if (!empty($groupDefs)) {
-                $groupedEntities[] = ['label' => $group['label'], 'defs' => $groupDefs];
+                $groupedEntities[] = [
+                    'label' => $group['label'] ?? '',
+                    'icon'  => $groupIcon,
+                    'defs'  => $groupDefs,
+                ];
             }
         }
-        $ungroupedEntities = array_values(
-            array_filter($allDefs, fn($d) => !in_array($d->name(), $usedNames, true))
-        );
+    } else {
+        // Zero-config fallback: when no menu is configured, list every
+        // registered entity (ungrouped) so a fresh install is not empty.
+        $ungroupedEntities = array_values($registry->all());
     }
 @endphp
 
@@ -56,10 +78,7 @@
         <a href="{{ route('bpadmin.dashboard') }}"
            class="bp-nav-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl mb-1 bp-sidebar-center {{ $isDash ? 'bp-nav-item-active' : '' }}"
            :title="$store.ui.sidebarCollapsed ? 'Dashboard' : ''">
-            <svg class="bp-nav-icon h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
+            {!! bp_icon('dashboard', 'bp-nav-icon h-4 w-4 flex-shrink-0') !!}
             <span class="flex-1 bp-sidebar-expand">Dashboard</span>
             @if($isDash)
                 <span class="h-1.5 w-1.5 rounded-full bg-bp-primary shadow-[0_0_8px_rgba(48,164,136,0.9)] bp-sidebar-expand"></span>
@@ -71,14 +90,17 @@
             <div x-data="{ open: true }" class="mt-5">
                 <button @click="open = !open"
                         class="flex w-full items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-bp-muted hover:text-bp-gray-600 transition-colors bp-sidebar-expand">
-                    <span>{{ $group['label'] }}</span>
-                    <svg :class="open ? 'rotate-180' : ''" class="h-3 w-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span class="flex items-center gap-2 min-w-0">
+                        @if(!empty($group['icon'])){!! bp_icon($group['icon'], 'h-3.5 w-3.5 flex-shrink-0') !!}@endif
+                        <span class="truncate">{{ bp_menu_label($group['label']) }}</span>
+                    </span>
+                    <svg :class="open ? 'rotate-180' : ''" class="h-3 w-3 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div x-show="open || $store.ui.sidebarCollapsed" x-cloak x-transition class="mt-1 space-y-0.5">
-                    @foreach($group['defs'] as $def)
-                        @include('bpadmin::components._sidebar-item', ['def' => $def])
+                    @foreach($group['defs'] as $item)
+                        @include('bpadmin::components._sidebar-item', ['def' => $item['def'], 'icon' => $item['icon'], 'label' => $item['label']])
                     @endforeach
                 </div>
             </div>

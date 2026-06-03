@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 3
-			path: src/Http/Presenters/BladeEntityPresenter.php
-
-		-
 			message: '#^Method BlackParadise\\LaravelAdminBladeUI\\Http\\Presenters\\BladeEntityPresenter\:\:create\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

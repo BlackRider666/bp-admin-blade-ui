@@ -41,25 +41,47 @@
                     @if($field instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField && $field->isEmbedded())
                         @php
                             $embeddedDefClass = $field->embeddedDefinition();
-                            $embeddedDef      = app(\BlackParadise\LaravelAdmin\Core\EntityDefinitionRegistry::class)
-                                ->get((new $embeddedDefClass())->resolveName());
                             $hostModelClass   = $definition->model ?? null;
-                            $embeddedFields   = array_values(array_filter(
-                                $embeddedDef->fields(),
-                                function ($f) use ($hostModelClass) {
-                                    if (!$f->visibleOnForm()) {
-                                        return false;
-                                    }
-                                    // skip FK back to host — auto-assigned on save
-                                    if ($hostModelClass
-                                        && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
-                                        && $f->relationKind() === 'belongsTo'
-                                        && $f->target() === $hostModelClass) {
-                                        return false;
-                                    }
-                                    return true;
-                                },
-                            ));
+
+                            // Core decorates sub-fields with options (filter + FK-skip already done)
+                            // when a RelationOptionsProvider is injected. Use that if available.
+                            // Fallback: instantiate the definition ourselves and apply the same
+                            // visibleOnForm + FK-to-host filters that core would apply.
+                            $embeddedDef    = new $embeddedDefClass();
+                            $embeddedFields = $field->meta()['embeddedFields'] ?? null;
+                            if ($embeddedFields === null) {
+                                $embeddedFields = array_values(array_filter(
+                                    $embeddedDef->fields(),
+                                    function ($f) use ($hostModelClass) {
+                                        if (!$f->visibleOnForm()) {
+                                            return false;
+                                        }
+                                        // skip FK back to host — auto-assigned on save
+                                        if ($hostModelClass
+                                            && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
+                                            && $f->relationKind() === 'belongsTo'
+                                            && $f->target() === $hostModelClass) {
+                                            return false;
+                                        }
+                                        return true;
+                                    },
+                                ));
+                            } else {
+                                // FK-skip remains in Blade because only Blade knows $hostModelClass
+                                $embeddedFields = array_values(array_filter(
+                                    $embeddedFields,
+                                    function ($f) use ($hostModelClass) {
+                                        if ($hostModelClass
+                                            && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
+                                            && $f->relationKind() === 'belongsTo'
+                                            && $f->target() === $hostModelClass) {
+                                            return false;
+                                        }
+                                        return true;
+                                    },
+                                ));
+                            }
+
                             $relationKind     = $field->relationKind();
                             $isMany           = in_array($relationKind, ['hasMany', 'morphMany', 'belongsToMany'], true);
                             $embeddedPrefix   = $field->name();
@@ -79,41 +101,76 @@
                             <legend class="text-sm font-medium text-bp-gray-500 px-2">{{ $field->label() }}</legend>
 
                             @if($isMany)
-                                @foreach($items as $idx => $item)
-                                    @php
-                                        $embedItemId = $item['id'] ?? null;
-                                        $embedKey    = $embedItemId !== null && $embedItemId !== ''
-                                            ? (string) $embedItemId
-                                            : 'new-' . $idx;
-                                    @endphp
-                                    <div id="embed-{{ $embeddedPrefix }}-{{ $embedKey }}"
-                                         data-embed-key="{{ $embedKey }}"
-                                         class="relative border border-bp-border-soft/60 rounded-lg p-3 mb-3 last:mb-0">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="text-[10px] uppercase tracking-widest text-bp-muted font-semibold">#{{ $idx + 1 }}</span>
-                                            {{-- Always emit the id input (empty for new items) so the writer
-                                                 can distinguish "new" vs "update existing" rows uniformly. --}}
-                                            <input type="hidden"
-                                                   name="{{ $embeddedPrefix }}[{{ $idx }}][id]"
-                                                   value="{{ $embedItemId !== null ? $embedItemId : '' }}">
-                                            @if($embedItemId !== null && $embedItemId !== '')
-                                                <span class="text-[10px] text-bp-gray-400 font-mono-bp">id: {{ $embedItemId }}</span>
-                                            @endif
-                                        </div>
-                                        @foreach($embeddedFields as $ef)
-                                            @include('bpadmin::components.field-input', [
-                                                'field'      => $ef,
-                                                'value'      => is_array($item) ? ($item[$ef->name()] ?? null) : null,
-                                                'errors'     => $errors,
-                                                'definition' => $embeddedDef,
-                                                'namePrefix' => $embeddedPrefix . '[' . $idx . ']',
-                                            ])
+                                <div x-data="bpRepeater({{ count($items) }})" data-bp-repeater="{{ $embeddedPrefix }}">
+                                    {{-- Pre-fill existing rows; user can add more or remove any. --}}
+                                    <div x-ref="rows" class="space-y-3">
+                                        @foreach($items as $idx => $item)
+                                            @php
+                                                $embedItemId = is_array($item) ? ($item['id'] ?? null) : null;
+                                            @endphp
+                                            <div data-bp-embed-row
+                                                 class="relative border border-bp-border-soft/60 rounded-lg p-3">
+                                                {{-- Hidden id so the writer can distinguish existing vs new rows. --}}
+                                                <input type="hidden"
+                                                       name="{{ $embeddedPrefix }}[{{ $idx }}][id]"
+                                                       value="{{ $embedItemId ?? '' }}">
+                                                <button type="button"
+                                                        @click="$el.closest('[data-bp-embed-row]').remove()"
+                                                        class="absolute top-2 right-2 text-bp-muted hover:text-red-400 transition-colors"
+                                                        title="Remove">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                                @foreach($embeddedFields as $ef)
+                                                    @include('bpadmin::components.field-input', [
+                                                        'field'      => $ef,
+                                                        'value'      => is_array($item) ? ($item[$ef->name()] ?? null) : null,
+                                                        'errors'     => $errors,
+                                                        'definition' => $embeddedDef,
+                                                        'namePrefix' => $embeddedPrefix . '[' . $idx . ']',
+                                                    ])
+                                                @endforeach
+                                            </div>
                                         @endforeach
                                     </div>
-                                @endforeach
-                                @if(empty($items))
-                                    <p class="text-xs text-bp-gray-400 italic mb-2">No items yet.</p>
-                                @endif
+
+                                    {{-- Blank-row blueprint for new rows cloned by bpRepeater.add().
+                                         `__ROW__` is substituted with the next index at clone time. --}}
+                                    <template x-ref="row">
+                                        <div data-bp-embed-row
+                                             class="relative border border-bp-border-soft/60 rounded-lg p-3 mt-3">
+                                            <input type="hidden" name="{{ $embeddedPrefix }}[__ROW__][id]" value="">
+                                            <button type="button"
+                                                    @click="$el.closest('[data-bp-embed-row]').remove()"
+                                                    class="absolute top-2 right-2 text-bp-muted hover:text-red-400 transition-colors"
+                                                    title="Remove">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+                                            @foreach($embeddedFields as $ef)
+                                                @include('bpadmin::components.field-input', [
+                                                    'field'      => $ef,
+                                                    'value'      => null,
+                                                    'errors'     => $errors,
+                                                    'definition' => $embeddedDef,
+                                                    'namePrefix' => $embeddedPrefix . '[__ROW__]',
+                                                ])
+                                            @endforeach
+                                        </div>
+                                    </template>
+
+                                    <button type="button"
+                                            data-bp-repeater-add
+                                            @click="add()"
+                                            class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-bp-primary hover:text-bp-primary/80 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        {{ __('bpadmin::common.buttons.add') }}
+                                    </button>
+                                </div>
                             @else
                                 @foreach($embeddedFields as $ef)
                                     @include('bpadmin::components.field-input', [

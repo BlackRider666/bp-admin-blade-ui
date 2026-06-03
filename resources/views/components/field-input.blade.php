@@ -24,7 +24,10 @@
         @endif
     </label>
 
-    @include('bpadmin::components.field.' . str_replace('_', '-', $field->type()), [
+    @includeFirst([
+        'bpadmin::components.field.' . str_replace('_', '-', $field->type()),
+        'bpadmin::components.field._unsupported',
+    ], [
         'field'    => $field,
         'value'    => old($htmlName, $value),
         'name'     => $htmlName,

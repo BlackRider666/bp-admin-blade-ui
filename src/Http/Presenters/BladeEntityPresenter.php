@@ -78,16 +78,16 @@ final class BladeEntityPresenter implements EntityPresenterInterface
         if ($deletedCount > 0) {
             $messages[] = "Deleted {$deletedCount} " . $definition->label() . '.';
         }
-        if (!empty($failedIds)) {
+        if ($failedIds !== []) {
             $messages[] = 'Skipped ' . count($failedIds) . ' record(s) due to insufficient permissions.';
         }
-        if (!empty($notFoundIds)) {
+        if ($notFoundIds !== []) {
             $messages[] = 'Skipped ' . count($notFoundIds) . ' record(s) that no longer exist.';
         }
 
         $redirect = to_route('bpadmin.entity.index', ['entity' => $definition->name()]);
 
-        $flashKey = !empty($failedIds) ? 'warning' : 'success';
+        $flashKey = $failedIds === [] ? 'success' : 'warning';
 
         return $redirect->with($flashKey, implode(' ', $messages) ?: 'No records were deleted.');
     }

@@ -16,6 +16,12 @@ final class BladeUIServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Load UI helpers (bp_icon, ...). Also wired via composer "files"
+        // autoload for fresh installs; the require_once + function_exists guard
+        // keeps it available even when a consumer's autoloader metadata is stale
+        // (e.g. local path-repo installs that predate this helper file).
+        require_once __DIR__ . '/Support/icon_helpers.php';
+
         // Override default JSON presenters with Blade-specific implementations.
         // Routes remain exclusively in bp-laravel-admin.
         $this->app->bind(EntityPresenterInterface::class, BladeEntityPresenter::class);

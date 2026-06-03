@@ -1,28 +1,8 @@
 @props(['field', 'record', 'definition' => null])
 @php
     $value = $record->get($field->name());
-
-    $bpDisplayRelation = static function (mixed $item, string $displayKey): string {
-        if (!is_array($item) && !is_object($item)) {
-            return (string) $item;
-        }
-        $arr = is_object($item) ? (array) $item : $item;
-        $raw = $arr[$displayKey] ?? $arr['name'] ?? $arr['title'] ?? null;
-        if (is_string($raw) && str_starts_with(ltrim($raw), '{')) {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                $raw = $decoded;
-            }
-        }
-        if (is_array($raw)) {
-            $locale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
-            $raw = $raw[$locale] ?? reset($raw) ?: null;
-        }
-        if ($raw === null || $raw === '') {
-            return '#' . ($arr['id'] ?? '?');
-        }
-        return strip_tags((string) $raw);
-    };
+    // Locale resolved once per component render; used by all relation cases below.
+    $bpLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
 @endphp
 
 @switch($field->type())
@@ -120,11 +100,10 @@
             $relationName = $field->relationName();
             $displayField = $field->displayField();
             $relation = $record->relation($relationName);
-            // Use the shared resolver so a translatable display field
-            // (e.g. City->name = ['en'=>…, 'uk'=>…]) renders as a locale
-            // string instead of reaching {{ }} as a raw array.
+            // bp_relation_label() handles translatable display fields (array/JSON)
+            // so they render as a locale string rather than the raw array.
             $displayValue = $relation !== null
-                ? $bpDisplayRelation($relation, $displayField)
+                ? bp_relation_label($relation, $displayField, $bpLocale)
                 : (string) ($value ?? '');
         @endphp
         {{ $displayValue }}
@@ -140,7 +119,7 @@
             <div class="flex flex-wrap gap-1">
                 @foreach($relItems as $item)
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-bp-primary/10 text-bp-primary">
-                        {{ $bpDisplayRelation($item, $displayKey) }}
+                        {{ bp_relation_label($item, $displayKey, $bpLocale) }}
                     </span>
                 @endforeach
             </div>
@@ -159,7 +138,7 @@
         @if(!empty($relItems))
             <ul class="flex flex-col gap-0.5 text-sm text-bp-gray-700">
                 @foreach($relItems as $item)
-                    <li class="truncate">{{ $bpDisplayRelation($item, $displayKey) }}</li>
+                    <li class="truncate">{{ bp_relation_label($item, $displayKey, $bpLocale) }}</li>
                 @endforeach
             </ul>
         @else
@@ -173,7 +152,7 @@
             $displayKey = $field->displayField();
         @endphp
         @if(!empty($relItem))
-            <span class="text-bp-gray-700">{{ $bpDisplayRelation($relItem, $displayKey) }}</span>
+            <span class="text-bp-gray-700">{{ bp_relation_label($relItem, $displayKey, $bpLocale) }}</span>
         @else
             <span class="text-bp-gray-400 text-xs">—</span>
         @endif
@@ -187,14 +166,16 @@
         @if($isMulti && is_array($value) && count($value))
             <span class="inline-flex flex-wrap gap-1">
                 @foreach($value as $item)
+                    @php $itemKey = bp_scalar($item); @endphp
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-bp-gray-100 text-bp-gray-700">
-                        {{ $enumOptions[$item] ?? $item }}
+                        {{ $enumOptions[$itemKey] ?? $itemKey }}
                     </span>
                 @endforeach
             </span>
         @elseif(!$isMulti && $value !== null && $value !== '')
+            @php $valueKey = bp_scalar($value); @endphp
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-bp-gray-100 text-bp-gray-700">
-                {{ $enumOptions[$value] ?? $value }}
+                {{ $enumOptions[$valueKey] ?? $valueKey }}
             </span>
         @else
             <span class="text-bp-gray-400 text-xs">—</span>

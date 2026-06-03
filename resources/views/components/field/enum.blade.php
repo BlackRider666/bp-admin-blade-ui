@@ -4,7 +4,7 @@
     $inputErrorKey = $errorKey ?? $field->name();
     $options       = $field->meta()['options'] ?? [];
     $isMultiple    = (bool) ($field->meta()['multiple'] ?? false);
-    $selected      = $isMultiple ? array_map('strval', (array) ($value ?? [])) : null;
+    $selected      = $isMultiple ? array_map(static fn($v) => (string) bp_scalar($v), (array) ($value ?? [])) : null;
 @endphp
 
 @if($isMultiple)
@@ -27,7 +27,7 @@
                    @error($inputErrorKey) border-red-300 @enderror">
         <option value="">— Select —</option>
         @foreach($options as $optValue => $optLabel)
-            <option value="{{ $optValue }}" {{ (string) $value === (string) $optValue ? 'selected' : '' }}>
+            <option value="{{ $optValue }}" {{ (string) bp_scalar($value) === (string) $optValue ? 'selected' : '' }}>
                 {{ $optLabel }}
             </option>
         @endforeach

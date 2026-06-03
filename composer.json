@@ -16,7 +16,10 @@
     "autoload": {
         "psr-4": {
             "BlackParadise\\LaravelAdminBladeUI\\": "src/"
-        }
+        },
+        "files": [
+            "src/Support/icon_helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
