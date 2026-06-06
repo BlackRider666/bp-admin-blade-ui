@@ -111,10 +111,6 @@ function register(A) {
       this.selected = checked ? this.allCheckboxes.map(el => el.value) : []
     },
     clear() { this.selected = [] },
-    bulkDelete(form) {
-      if (!confirm(`Delete ${this.selected.length} record(s)?`)) return
-      form.submit()
-    },
   }))
 
   A.data('bpForm', () => ({
@@ -166,6 +162,81 @@ function register(A) {
       this.index++
       const focusable = node.querySelector('input:not([type=hidden]),textarea,select')
       if (focusable) focusable.focus()
+    },
+  }))
+
+  // Quill rich-text editor wrapper. Uses Alpine x-init so it works in repeater
+  // clones (no inline <script> that fails on innerHTML re-injection).
+  // id: the container element's id; the hidden input is assumed to be id+'-input'.
+  //
+  // Bug #3 / A18+A19 fix: defer booting Quill until the container is laid out
+  // (offsetParent !== null). Quill 2 reads .offset on a null selection range when
+  // initialised inside a display:none element (inactive locale tabs, collapsed
+  // repeater rows) → TypeError: Cannot read properties of null (reading 'offset').
+  // We check visibility first and fall back to IntersectionObserver so the editor
+  // inits correctly when the tab/row becomes visible later.
+  A.data('bpQuill', (initialValue) => ({
+    content: initialValue || '',
+    quill: null,
+    _id: null,
+    init(id) {
+      this._id = id
+      if (this._visible()) {
+        this._boot()
+      } else {
+        this._observeVisibility()
+      }
+    },
+    _visible() {
+      const el = document.getElementById(this._id)
+      return !!(el && el.offsetParent !== null)
+    },
+    _observeVisibility() {
+      const el = document.getElementById(this._id)
+      if (!el || typeof IntersectionObserver === 'undefined') { this._boot(); return }
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some(e => e.isIntersecting) && this._visible()) {
+          io.disconnect()
+          this._boot()
+        }
+      })
+      io.observe(el)
+    },
+    _boot() {
+      if (this.quill) return
+      const container = document.getElementById(this._id)
+      const input     = document.getElementById(this._id + '-input')
+      if (!container || typeof Quill === 'undefined') return
+
+      this.quill = new Quill(container, {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ align: [] }],
+            ['clean'],
+          ],
+        },
+        placeholder: container.dataset.placeholder || '',
+      })
+
+      if (this.content) {
+        // Bug #3 / A18: dangerouslyPasteHTML() updates the selection internally,
+        // and Quill 2 reads `.offset` on a null selection range (editor inited in
+        // a display:none locale tab / collapsed repeater row) → TypeError. Convert
+        // the HTML to a Delta and apply it with the 'silent' source, which writes
+        // content WITHOUT touching the selection, so no offset read ever happens.
+        const delta = this.quill.clipboard.convert({ html: this.content })
+        this.quill.setContents(delta, 'silent')
+      }
+
+      this.quill.on('text-change', () => {
+        const html = this.quill.getText().trim() ? this.quill.root.innerHTML : ''
+        this.content = html
+        if (input) input.value = html
+      })
     },
   }))
 

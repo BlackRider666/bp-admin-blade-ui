@@ -1,5 +1,5 @@
 {
-  "name": "laravel-admin-blade-ui-next",
+  "name": "admin-blade-ui",
   "private": true,
   "scripts": {
     "build": "tailwindcss -i ./resources/css/bpadmin.css -o ./public/bpadmin/bpadmin.css --minify",

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-use BackedEnum;
 use BlackParadise\LaravelAdminBladeUI\Support\IconSet;
-use Closure;
 use Illuminate\Support\Facades\Lang;
 
 if (!function_exists('bp_icon')) {

@@ -4,6 +4,7 @@
 <div x-data="{ checked: {{ $value ? 'true' : 'false' }} }">
     <input type="hidden" name="{{ $inputName }}" :value="checked ? '1' : '0'">
     <button type="button"
+            id="{{ $inputName }}"
             @click="checked = !checked"
             :class="checked ? 'bg-blue-600' : 'bg-bp-gray-200'"
             class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

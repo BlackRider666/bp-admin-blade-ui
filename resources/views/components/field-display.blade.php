@@ -2,7 +2,7 @@
 @php
     $value = $record->get($field->name());
     // Locale resolved once per component render; used by all relation cases below.
-    $bpLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
+    $bpLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
 @endphp
 
 @switch($field->type())
@@ -59,8 +59,13 @@
         @break
 
     @case('date')
-        @if($value)
-            @php $dt = \Carbon\Carbon::parse($value); @endphp
+        @php
+            $dt = null;
+            if ($value !== null && $value !== '') {
+                try { $dt = \Carbon\Carbon::parse($value); } catch (\Throwable $e) { $dt = null; }
+            }
+        @endphp
+        @if($dt)
             <span class="text-bp-gray-600 text-xs tabular-nums" title="{{ $dt->format('D, d M Y') }}">{{ $dt->format('d.m.Y') }}</span>
         @else
             <span class="text-bp-gray-400 text-xs">—</span>
@@ -68,8 +73,13 @@
         @break
 
     @case('datetime')
-        @if($value)
-            @php $dt = \Carbon\Carbon::parse($value); @endphp
+        @php
+            $dt = null;
+            if ($value !== null && $value !== '') {
+                try { $dt = \Carbon\Carbon::parse($value); } catch (\Throwable $e) { $dt = null; }
+            }
+        @endphp
+        @if($dt)
             <span x-data="bpRelativeTime({{ \Illuminate\Support\Js::from($dt->toIso8601String()) }})"
                   class="text-bp-gray-600 text-xs tabular-nums inline-flex items-center gap-1.5"
                   title="{{ $dt->format('D, d M Y H:i:s') }}">
@@ -201,7 +211,7 @@
     @case('translatable')
         @php
             $translations = is_array($value) ? $value : (is_string($value) ? (json_decode($value, true) ?? []) : []);
-            $defaultLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
+            $defaultLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
             $displayValue = $translations[$defaultLocale] ?? reset($translations) ?: null;
         @endphp
         <span class="text-bp-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags((string) ($displayValue ?? '')), 80) ?: '—' }}</span>

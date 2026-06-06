@@ -7,9 +7,22 @@
     $currentLabel  = $currentOption['label'] ?? (string) $value;
 @endphp
 
-<div x-data="{ search: @js($currentLabel), open: false, selected: @js((string) $value) }" class="relative">
+<div
+    x-data="{
+        options:  {{ json_encode($options) }},
+        search:   @js($currentLabel),
+        open:     false,
+        selected: @js((string) $value),
+        get filteredOptions() {
+            if (!this.search) return this.options;
+            return this.options.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase()));
+        },
+    }"
+    class="relative"
+>
     <input type="hidden" name="{{ $inputName }}" :value="selected">
     <input type="text"
+           id="{{ $inputName }}"
            x-model="search"
            @focus="open = true"
            @click.outside="open = false"
@@ -18,13 +31,14 @@
     <div x-show="open"
          x-transition
          class="absolute z-10 mt-1 w-full bg-bp-surface rounded-xl shadow-lg border border-bp-border max-h-48 overflow-y-auto">
-        @forelse($options as $option)
-            <div @click="selected = @js((string) $option['id']); search = @js($option['label']); open = false"
-                 class="px-3 py-2 text-sm text-bp-gray-700 hover:bg-bp-primary/5 cursor-pointer">
-                {{ $option['label'] }}
+        <template x-for="opt in filteredOptions" :key="opt.id">
+            <div @click="selected = String(opt.id); search = opt.label; open = false"
+                 class="px-3 py-2 text-sm text-bp-gray-700 hover:bg-bp-primary/5 cursor-pointer"
+                 x-text="opt.label">
             </div>
-        @empty
-            <div class="px-3 py-2 text-sm text-bp-gray-400">No options available.</div>
-        @endforelse
+        </template>
+        <template x-if="filteredOptions.length === 0">
+            <div class="px-3 py-2 text-sm text-bp-gray-400" x-text="search ? 'No results.' : '—'"></div>
+        </template>
     </div>
 </div>

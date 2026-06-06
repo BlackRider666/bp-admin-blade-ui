@@ -11,7 +11,7 @@
      */
     $items      = is_array($value) ? $value : [];
     $displayKey = $field->displayField();
-    $locale     = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
+    $locale     = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
 @endphp
 
 @if(!empty($items))

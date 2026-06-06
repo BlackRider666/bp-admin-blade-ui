@@ -4,9 +4,23 @@
     $htmlName = $namePrefix
         ? $namePrefix . '[' . $field->name() . ']'
         : $field->name();
-    $errorKey = $namePrefix
-        ? $namePrefix . '.' . $field->name()
-        : $field->name();
+
+    // Convert bracket HTML name to Laravel dot-notation for @error() / $errors->has().
+    // e.g. "histories[0][category]" → "histories.0.category"
+    // Top-level names (no namePrefix) are already dot-free.
+    if ($namePrefix) {
+        $dotPrefix = preg_replace('/\[(\d+|\w+)\]/', '.$1', $namePrefix);
+        $dotPrefix = preg_replace('/\[/', '.', $dotPrefix);
+        $dotPrefix = preg_replace('/\]/', '', $dotPrefix);
+        $errorKey = $dotPrefix . '.' . $field->name();
+    } else {
+        $errorKey = $field->name();
+    }
+
+    // Composite types (editor, translatable) render multiple controls and must NOT
+    // have a <label for="..."> pointing to a non-existent single input id.
+    $compositeTypes = ['editor', 'translatable'];
+    $isComposite = in_array($field->type(), $compositeTypes, true);
 @endphp
 
 @if($field->type() === 'hidden')
@@ -17,7 +31,7 @@
     ])
 @else
 <div class="mb-5">
-    <label for="{{ $htmlName }}" class="flex items-center text-[11px] font-semibold uppercase tracking-[0.14em] text-bp-gray-500 mb-2">
+    <label @if(!$isComposite) for="{{ $htmlName }}" @endif class="flex items-center text-[11px] font-semibold uppercase tracking-[0.14em] text-bp-gray-500 mb-2">
         {{ $definition ? bp_field_label($definition, $field) : $field->label() }}
         @if(in_array('required', $field->rules()))
             <span class="text-red-400 ml-1">*</span>

@@ -10,7 +10,7 @@
      * resolved to the current default locale via bp_relation_label().
      */
     $displayKey = $field->displayField();
-    $locale     = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->defaultLocale();
+    $locale     = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
     $label      = null;
 
     if (is_array($value) || is_object($value)) {

@@ -21,7 +21,7 @@ If your project uses Tailwind CSS, you can integrate BPAdmin's views into your T
 Add to your `tailwind.config.js`:
 
 ```js
-const bpadmin = require('./vendor/black-paradise/laravel-admin-blade-ui-next/bpadmin-tailwind-plugin.cjs')
+const bpadmin = require('./vendor/black-paradise/admin-blade-ui/bpadmin-tailwind-plugin.cjs')
 
 module.exports = {
     content: [

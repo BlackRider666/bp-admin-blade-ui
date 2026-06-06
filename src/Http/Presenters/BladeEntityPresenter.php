@@ -106,4 +106,11 @@ final class BladeEntityPresenter implements EntityPresenterInterface
     {
         return back()->withErrors($errors)->withInput();
     }
+
+    public function actionResult(string $message, ?string $rowId = null): Response
+    {
+        $full = $rowId !== null ? $message . ' (#' . $rowId . ')' : $message;
+
+        return back()->with('success', $full);
+    }
 }

@@ -18,7 +18,7 @@
     <div x-show="open"
          @click.outside="open = false"
          x-transition
-         class="absolute right-0 mt-1 bg-white border border-bp-gray-200 rounded shadow-md py-1 min-w-[80px] z-50"
+         class="absolute right-0 mt-1 bg-bp-surface border border-bp-border rounded shadow-md py-1 min-w-[80px] z-50"
          style="display: none;">
         @foreach ($locales as $locale)
             <form method="POST" action="{{ route('bpadmin.locale.switch') }}" class="block">

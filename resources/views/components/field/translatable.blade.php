@@ -5,12 +5,12 @@
     $inputErrorKey  = $errorKey ?? $field->name();
     $localeProvider = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class);
     $locales        = $localeProvider->availableLocales();
-    $defaultLocale  = $localeProvider->defaultLocale();
+    $defaultLocale  = $localeProvider->currentLocale();
     $translations   = is_array($value) ? $value : (is_string($value) ? (json_decode($value, true) ?? []) : []);
     $innerType      = method_exists($field, 'innerType') ? $field->innerType() : 'text';
-    // Stable, deterministic id so re-renders preserve element identity (Alpine state,
-    // editor instances, error bindings) instead of regenerating a new uniqid per request.
-    $componentId    = 'translatable-' . preg_replace('/[^a-z0-9_-]/i', '_', $field->name()) . '-' . substr(md5($field->name()), 0, 8);
+    // Deterministic id derived from the full input NAME (not field->name()), so each
+    // repeater row gets a distinct id and __ROW__ substitutes correctly on clone.
+    $componentId    = 'translatable-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $inputName);
 @endphp
 
 <div x-data="{ activeTab: '{{ $defaultLocale }}' }" id="{{ $componentId }}">
@@ -32,44 +32,18 @@
     @foreach($locales as $locale)
         <div x-show="activeTab === '{{ $locale }}'" x-cloak>
             @if($innerType === 'editor')
-                @php $editorId = $componentId . '-editor-' . $locale; @endphp
-                <input type="hidden"
-                       id="{{ $editorId }}-input"
-                       name="{{ $inputName }}[{{ $locale }}]"
-                       value="{{ $translations[$locale] ?? '' }}">
-                <div id="{{ $editorId }}"
-                     class="@error($inputErrorKey . '.' . $locale) ring-1 ring-red-300 @enderror"></div>
-
-                <script>
-                (function () {
-                    var container = document.getElementById('{{ $editorId }}');
-                    var input = document.getElementById('{{ $editorId }}-input');
-                    if (!container || typeof Quill === 'undefined') return;
-
-                    var quill = new Quill(container, {
-                        theme: 'snow',
-                        modules: {
-                            toolbar: [
-                                [{ header: [1, 2, 3, false] }],
-                                ['bold', 'italic', 'underline'],
-                                [{ list: 'ordered' }, { list: 'bullet' }],
-                                [{ align: [] }],
-                                ['clean'],
-                            ],
-                        },
-                        placeholder: '{{ $field->label() }} ({{ strtoupper($locale) }})...',
-                    });
-
-                    var initial = input.value;
-                    if (initial) {
-                        quill.clipboard.dangerouslyPasteHTML(initial);
-                    }
-
-                    quill.on('text-change', function () {
-                        input.value = quill.getText().trim() ? quill.root.innerHTML : '';
-                    });
-                }());
-                </script>
+                @php
+                    $editorId     = $componentId . '-editor-' . $locale;
+                    $editorValue  = old($inputErrorKey . '.' . $locale, $translations[$locale] ?? '');
+                @endphp
+                <div x-data="bpQuill(@js($editorValue))" x-init="init('{{ $editorId }}')">
+                    <input type="hidden"
+                           id="{{ $editorId }}-input"
+                           name="{{ $inputName }}[{{ $locale }}]"
+                           :value="content">
+                    <div id="{{ $editorId }}"
+                         class="@error($inputErrorKey . '.' . $locale) ring-1 ring-red-300 @enderror"></div>
+                </div>
             @else
                 <input type="text"
                        id="{{ $inputName }}_{{ $locale }}"
