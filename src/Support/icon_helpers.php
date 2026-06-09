@@ -135,18 +135,26 @@ if (!function_exists('bp_scalar')) {
     /**
      * Coerce a value-object, backed enum, or VO-like object to its scalar form.
      *
-     * Resolution order:
+     * Resolution order (for objects, public API before internal state):
      *   1. BackedEnum                                  → $v->value
-     *   2. Object with public `$value` property        → $v->value
-     *      (uses property_exists so null values are also coerced)
-     *   3. Object with public no-arg `value()` method  → $v->value()
-     *      (skips methods that require arguments to avoid ArgumentCountError)
+     *   2. Object with no-arg `value()` method         → $v->value()
+     *      (the public accessor; preferred so an encapsulated VO with a private
+     *       $value never triggers "Cannot access private property". Methods that
+     *       require arguments are skipped to avoid ArgumentCountError.)
+     *   3. Object with public `$value` property        → $v->value
+     *      (via get_object_vars, which only exposes publicly-accessible props
+     *       and includes explicit-null ones)
      *   4. Object with `__toString`                    → (string) $v
-     *   5. Anything else (already scalar/null)         → as-is
+     *   5. Object with none of the above               → throws (uncoercible)
+     *
+     * Non-objects (scalars, null, arrays) are returned as-is.
      *
      * Used in Blade templates before array-offset access or string comparison,
      * so that EnumField display and form rendering survive backed-enum or VO
      * values stored in EntityRecord.
+     *
+     * @throws InvalidArgumentException When $v is an object that exposes no
+     *                                  scalar coercion path.
      */
     function bp_scalar(mixed $v): mixed
     {
@@ -154,24 +162,35 @@ if (!function_exists('bp_scalar')) {
             return $v->value;
         }
 
-        if (is_object($v)) {
-            // property_exists catches null-valued properties too (isset() would miss them).
-            if (property_exists($v, 'value') && !($v->value instanceof Closure)) {
-                return $v->value;
-            }
-            if (method_exists($v, 'value')) {
-                // Only call value() when it requires no arguments to avoid
-                // ArgumentCountError for VOs like `value(int $x)`.
-                $ref = new ReflectionMethod($v, 'value');
-                if ($ref->getNumberOfRequiredParameters() === 0) {
-                    return $v->value();
-                }
-            }
-            if (method_exists($v, '__toString')) {
-                return (string) $v;
-            }
+        if (!is_object($v)) {
+            return $v;
         }
 
-        return $v;
+        // Prefer the public accessor over reading state: value() works for an
+        // encapsulated VO whose $value is private, where a direct property read
+        // would throw "Cannot access private property". Skip value() when it
+        // requires arguments to avoid an ArgumentCountError (e.g. value(int $x)).
+        if (method_exists($v, 'value')
+            && (new ReflectionMethod($v, 'value'))->getNumberOfRequiredParameters() === 0
+        ) {
+            return $v->value();
+        }
+
+        // Plain VO exposing a public $value. get_object_vars() only returns
+        // publicly-accessible properties (so a private $value is never touched)
+        // and includes explicit-null ones (which isset() would skip).
+        $publicVars = get_object_vars($v);
+        if (array_key_exists('value', $publicVars) && !($publicVars['value'] instanceof Closure)) {
+            return $publicVars['value'];
+        }
+
+        if (method_exists($v, '__toString')) {
+            return (string) $v;
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'bp_scalar() cannot coerce %s to a scalar: no value() accessor, public $value, or __toString().',
+            $v::class,
+        ));
     }
 }

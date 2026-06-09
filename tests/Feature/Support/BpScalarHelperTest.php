@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BlackParadise\LaravelAdminBladeUI\Tests\Feature\Support;
 
 use BlackParadise\LaravelAdminBladeUI\Tests\TestCase;
+use InvalidArgumentException;
 
 enum StubStringEnum: string
 {
@@ -57,6 +58,32 @@ class StubToStringObject
     {
         return 'tostring-value';
     }
+}
+
+class StubValueObjectPrivateValue
+{
+    // Encapsulated VO: its $value is private, so reading it from outside the
+    // class would throw "Cannot access private property". bp_scalar() must
+    // prefer the public value() accessor and never touch the property.
+    public function __construct(private int $value = 1) {}
+
+    public function value(): int
+    {
+        return $this->value;
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+class StubUncoercibleObject
+{
+    // No public value() accessor, no public $value, no __toString: there is no
+    // way to coerce this to a scalar, so bp_scalar() must throw instead of
+    // silently returning the object (which would fail obscurely downstream).
+    private string $value = 'hidden';
 }
 
 final class BpScalarHelperTest extends TestCase
@@ -121,5 +148,28 @@ final class BpScalarHelperTest extends TestCase
     public function test_object_with_required_arg_value_method_falls_back_to_tostring(): void
     {
         self::assertSame('tostring-fallback', bp_scalar(new StubValueObjectWithRequiredArgMethod()));
+    }
+
+    /**
+     * A VO with an encapsulated (private) $value must be coerced via its public
+     * value() accessor. The accessor is preferred over a direct property read,
+     * which would throw "Cannot access private property" for a private $value.
+     */
+    public function test_object_with_private_value_property_uses_value_method(): void
+    {
+        self::assertSame(1, bp_scalar(new StubValueObjectPrivateValue()));
+    }
+
+    /**
+     * An object exposing no coercion path (no public value(), no public $value,
+     * no __toString) cannot be reduced to a scalar. bp_scalar() must throw a
+     * clear exception rather than return the object as-is and fail obscurely
+     * downstream (e.g. when used as an array offset or string-cast).
+     */
+    public function test_object_without_coercion_path_throws(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        bp_scalar(new StubUncoercibleObject());
     }
 }
