@@ -5,13 +5,24 @@
     $inputErrorKey  = $errorKey ?? $field->name();
     $localeProvider = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class);
     $locales        = $localeProvider->availableLocales();
-    $defaultLocale  = $localeProvider->currentLocale();
+    $defaultLocale  = bp_locale();
     $translations   = is_array($value) ? $value : (is_string($value) ? (json_decode($value, true) ?? []) : []);
     $innerType      = method_exists($field, 'innerType') ? $field->innerType() : 'text';
     // Deterministic id derived from the full input NAME (not field->name()), so each
     // repeater row gets a distinct id and __ROW__ substitutes correctly on clone.
     $componentId    = 'translatable-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $inputName);
 @endphp
+
+@if($innerType === 'editor')
+    @once('bpadmin-quill-assets')
+        @push('bp-head')
+            <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet"
+                  integrity="sha384-ecIckRi4QlKYya/FQUbBUjS4qp65jF/J87Guw5uzTbO1C1Jfa/6kYmd6dXUF6D7i" crossorigin="anonymous">
+            <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" defer
+                    integrity="sha384-utBUCeG4SYaCm4m7GQZYr8Hy8Fpy3V4KGjBZaf4WTKOcwhCYpt/0PfeEe3HNlwx8" crossorigin="anonymous"></script>
+        @endpush
+    @endonce
+@endif
 
 <div x-data="{ activeTab: '{{ $defaultLocale }}' }" id="{{ $componentId }}">
     {{-- Locale tabs --}}

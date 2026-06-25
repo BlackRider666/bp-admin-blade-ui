@@ -16,29 +16,9 @@
     $selected = array_values(array_filter($selected, fn ($s) => $s !== ''));
 @endphp
 
+<script type="application/json" id="bp-opts-{{ $inputName }}">{!! json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 <div
-    x-data="{
-        options:  {{ json_encode($options) }},
-        selected: {{ json_encode($selected) }},
-        search:   '',
-        open:     false,
-        toggle(id) {
-            id = String(id);
-            if (this.selected.includes(id)) {
-                this.selected = this.selected.filter(s => s !== id);
-            } else {
-                this.selected.push(id);
-            }
-        },
-        labelFor(id) {
-            const opt = this.options.find(o => String(o.id) === String(id));
-            return opt ? opt.label : id;
-        },
-        get filteredOptions() {
-            if (!this.search) return this.options;
-            return this.options.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase()));
-        },
-    }"
+    x-data="bpRelationMultiSelect('bp-opts-{{ $inputName }}', {{ json_encode($selected, JSON_HEX_TAG) }})"
     class="relative"
 >
     {{-- Hidden inputs for form submission (array) --}}

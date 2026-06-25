@@ -2,7 +2,7 @@
 @php
     $value = $record->get($field->name());
     // Locale resolved once per component render; used by all relation cases below.
-    $bpLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
+    $bpLocale = bp_locale();
 @endphp
 
 @switch($field->type())
@@ -83,9 +83,7 @@
             <span x-data="bpRelativeTime({{ \Illuminate\Support\Js::from($dt->toIso8601String()) }})"
                   class="text-bp-gray-600 text-xs tabular-nums inline-flex items-center gap-1.5"
                   title="{{ $dt->format('D, d M Y H:i:s') }}">
-                <svg class="h-3 w-3 text-bp-muted/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <svg class="h-3 w-3 text-bp-muted/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><use href="#bp-i-clock"/></svg>
                 <span x-text="label">{{ $dt->format('d.m.Y H:i') }}</span>
             </span>
         @else
@@ -211,7 +209,7 @@
     @case('translatable')
         @php
             $translations = is_array($value) ? $value : (is_string($value) ? (json_decode($value, true) ?? []) : []);
-            $defaultLocale = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class)->currentLocale();
+            $defaultLocale = bp_locale();
             $displayValue = $translations[$defaultLocale] ?? reset($translations) ?: null;
         @endphp
         <span class="text-bp-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags((string) ($displayValue ?? '')), 80) ?: '—' }}</span>

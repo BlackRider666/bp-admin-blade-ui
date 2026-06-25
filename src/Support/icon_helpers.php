@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract;
 use BlackParadise\LaravelAdminBladeUI\Support\IconSet;
 use Illuminate\Support\Facades\Lang;
 
@@ -128,6 +129,23 @@ if (!function_exists('bp_relation_label')) {
         }
 
         return strip_tags((string) $raw);
+    }
+}
+
+if (!function_exists('bp_locale')) {
+    /**
+     * Current admin locale with a per-process provider cache.
+     *
+     * The provider instance is container-resolved once; currentLocale() itself
+     * stays live (locale switcher). NOTE: static provider ref is fine under
+     * FPM; revisit if the host app moves to Octane.
+     */
+    function bp_locale(): string
+    {
+        static $provider = null;
+        $provider ??= resolve(LocaleProviderContract::class);
+
+        return $provider->currentLocale();
     }
 }
 

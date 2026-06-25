@@ -7,17 +7,9 @@
     $currentLabel  = $currentOption['label'] ?? (string) $value;
 @endphp
 
+<script type="application/json" id="bp-opts-{{ $inputName }}">{!! json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 <div
-    x-data="{
-        options:  {{ json_encode($options) }},
-        search:   @js($currentLabel),
-        open:     false,
-        selected: @js((string) $value),
-        get filteredOptions() {
-            if (!this.search) return this.options;
-            return this.options.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase()));
-        },
-    }"
+    x-data="bpRelationSelect('bp-opts-{{ $inputName }}', @js((string) $value), @js($currentLabel))"
     class="relative"
 >
     <input type="hidden" name="{{ $inputName }}" :value="selected">

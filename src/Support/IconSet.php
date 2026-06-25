@@ -22,10 +22,21 @@ final class IconSet
      */
     public const DEFAULT = 'list';
 
+    /** @var array<string, string>|null */
+    private static ?array $cachedMap = null;
+
     /**
      * @return array<string, string> name => inner SVG markup
      */
     public static function map(): array
+    {
+        return self::$cachedMap ??= self::buildMap();
+    }
+
+    /**
+     * @return array<string, string> name => inner SVG markup
+     */
+    private static function buildMap(): array
     {
         $p = static fn(string $d): string => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' . $d . '"/>';
 

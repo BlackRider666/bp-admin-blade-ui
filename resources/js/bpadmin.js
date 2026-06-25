@@ -113,6 +113,43 @@ function register(A) {
     clear() { this.selected = [] },
   }))
 
+  const bpReadOptions = (id) => {
+    const el = document.getElementById(id)
+    try { return el ? JSON.parse(el.textContent) : [] } catch { return [] }
+  }
+
+  A.data('bpRelationSelect', (optsId, initial, initialLabel) => ({
+    options: [],
+    search: initialLabel,
+    open: false,
+    selected: initial,
+    init() { this.options = bpReadOptions(optsId) },
+    get filteredOptions() {
+      if (!this.search) return this.options
+      return this.options.filter((o) => o.label.toLowerCase().includes(this.search.toLowerCase()))
+    },
+  }))
+
+  A.data('bpRelationMultiSelect', (optsId, selected) => ({
+    options: [],
+    selected,
+    search: '',
+    open: false,
+    init() { this.options = bpReadOptions(optsId) },
+    toggle(id) {
+      id = String(id)
+      this.selected = this.selected.includes(id) ? this.selected.filter((s) => s !== id) : [...this.selected, id]
+    },
+    labelFor(id) {
+      const opt = this.options.find((o) => String(o.id) === String(id))
+      return opt ? opt.label : id
+    },
+    get filteredOptions() {
+      if (!this.search) return this.options
+      return this.options.filter((o) => o.label.toLowerCase().includes(this.search.toLowerCase()))
+    },
+  }))
+
   A.data('bpForm', () => ({
     submitting: false,
     dirty: false,
@@ -293,11 +330,24 @@ function register(A) {
     },
   }))
 
+  const bpTimeTicker = {
+    subs: new Set(),
+    timer: null,
+    add(fn) {
+      this.subs.add(fn)
+      if (!this.timer) this.timer = setInterval(() => this.subs.forEach((f) => f()), 60000)
+    },
+    remove(fn) {
+      this.subs.delete(fn)
+      if (this.subs.size === 0 && this.timer) { clearInterval(this.timer); this.timer = null }
+    },
+  }
+
   A.data('bpRelativeTime', (iso) => ({
     label: '',
-    timer: null,
-    init() { this.refresh(); this.timer = setInterval(() => this.refresh(), 60000) },
-    destroy() { if (this.timer) clearInterval(this.timer) },
+    _tick: null,
+    init() { if (this._tick) bpTimeTicker.remove(this._tick); this.refresh(); this._tick = () => this.refresh(); bpTimeTicker.add(this._tick) },
+    destroy() { if (this._tick) bpTimeTicker.remove(this._tick) },
     refresh() {
       const then = new Date(iso)
       if (isNaN(then.getTime())) { this.label = iso; return }
