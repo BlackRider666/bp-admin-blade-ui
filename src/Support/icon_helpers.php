@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use BlackParadise\CoreAdmin\Domain\Contracts\EntityDefinition\EntityDefinitionContract;
 use BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract;
+use BlackParadise\CoreAdmin\Domain\Entity\EntityRecord;
 use BlackParadise\LaravelAdminBladeUI\Support\IconSet;
 use Illuminate\Support\Facades\Lang;
 
@@ -146,6 +148,26 @@ if (!function_exists('bp_locale')) {
         $provider ??= resolve(LocaleProviderContract::class);
 
         return $provider->currentLocale();
+    }
+}
+
+if (!function_exists('bp_embed_record')) {
+    /**
+     * Wrap a flat embedded-relation array into an EntityRecord so that standard
+     * field-display / field-input components can render sub-fields unchanged.
+     *
+     * The same array is passed as both attributes AND relations: scalar sub-fields
+     * are resolved via get() (attributes), non-scalar sub-relations
+     * (belongsToMany / hasMany / ...) via relation() (relations). The deep-serialised
+     * output from a repository carries both under the same flat array.
+     *
+     * @param array<string, mixed> $data
+     */
+    function bp_embed_record(
+        EntityDefinitionContract $definition,
+        array $data,
+    ): EntityRecord {
+        return new EntityRecord($definition, $data, $data);
     }
 }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BlackParadise\LaravelAdminBladeUI\Tests\Fixtures;
 
+use BlackParadise\CoreAdmin\Domain\Fields\BelongsToManyField;
 use BlackParadise\CoreAdmin\Domain\Fields\TextField;
 use BlackParadise\LaravelAdmin\EntityDefinition;
 
@@ -25,6 +26,8 @@ final class StubJournalHistoryDefinition extends EntityDefinition
         return [
             TextField::make('title')->required(),
             TextField::make('period'),
+            BelongsToManyField::make('events', StubModel::class)
+                ->withDisplayField('title'),
         ];
     }
 }

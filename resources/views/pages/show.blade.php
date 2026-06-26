@@ -74,14 +74,50 @@
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-bp-primary/60 to-transparent"></div>
         <div class="divide-y divide-bp-border/70">
             @forelse($fields as $field)
-                <div class="flex flex-col md:flex-row gap-2 md:gap-6 px-6 py-4 hover:bg-white/[0.02] transition-colors">
-                    <div class="md:w-48 flex-shrink-0">
-                        <p class="text-[10px] uppercase tracking-widest text-bp-muted font-semibold">{{ bp_field_label($definition, $field) }}</p>
+                @if($field instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField && $field->isEmbedded())
+                    @php
+                        $embeddedDefClass = $field->embeddedDefinition();
+                        $embeddedDef      = new $embeddedDefClass();
+                        $embeddedFields   = array_values(array_filter(
+                            $embeddedDef->fields(),
+                            fn ($f) => $f->visibleOnShow(),
+                        ));
+                        $relRecord = $record->relation($field->relationName());
+                        $isMany    = in_array($field->relationKind(), ['hasMany', 'morphMany', 'belongsToMany'], true);
+                        $rows      = $isMany
+                            ? (is_array($relRecord) ? array_values($relRecord) : [])
+                            : [is_array($relRecord) ? $relRecord : []];
+                    @endphp
+                    <div class="px-6 py-4">
+                        <p class="text-[10px] uppercase tracking-widest text-bp-muted font-semibold mb-3">{{ bp_field_label($definition, $field) }}</p>
+                        @forelse($rows as $row)
+                            <div class="border border-bp-border-soft rounded-xl p-4 mb-3 last:mb-0 divide-y divide-bp-border/50">
+                                @foreach($embeddedFields as $ef)
+                                    @php $subRecord = bp_embed_record($embeddedDef, is_array($row) ? $row : []); @endphp
+                                    <div class="flex flex-col md:flex-row gap-2 md:gap-6 py-2">
+                                        <div class="md:w-40 flex-shrink-0">
+                                            <p class="text-[10px] uppercase tracking-widest text-bp-muted/80 font-semibold">{{ bp_field_label($embeddedDef, $ef) }}</p>
+                                        </div>
+                                        <div class="flex-1 text-sm text-bp-gray-800">
+                                            @include('bpadmin::components.field-display', ['field' => $ef, 'record' => $subRecord, 'definition' => $embeddedDef])
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @empty
+                            <span class="text-bp-gray-400 text-xs">—</span>
+                        @endforelse
                     </div>
-                    <div class="flex-1 text-sm text-bp-gray-800">
-                        @include('bpadmin::components.field-display', ['field' => $field, 'record' => $record, 'definition' => $definition])
+                @else
+                    <div class="flex flex-col md:flex-row gap-2 md:gap-6 px-6 py-4 hover:bg-white/[0.02] transition-colors">
+                        <div class="md:w-48 flex-shrink-0">
+                            <p class="text-[10px] uppercase tracking-widest text-bp-muted font-semibold">{{ bp_field_label($definition, $field) }}</p>
+                        </div>
+                        <div class="flex-1 text-sm text-bp-gray-800">
+                            @include('bpadmin::components.field-display', ['field' => $field, 'record' => $record, 'definition' => $definition])
+                        </div>
                     </div>
-                </div>
+                @endif
             @empty
                 <div class="px-6 py-10 text-center text-bp-muted text-sm">No fields to display.</div>
             @endforelse
