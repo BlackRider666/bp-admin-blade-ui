@@ -3,16 +3,9 @@
     $inputName     = $name ?? $field->name();
     $inputErrorKey = $errorKey ?? $field->name();
     // Bug #13: $value may be a rejected old() input (e.g. "not-a-date") on a
-    // re-rendered form. Carbon::parse() throws on garbage → 500. Guard it and
-    // fall back to '' — a <input type=date> can only display a Y-m-d string.
-    $dateValue = '';
-    if ($value !== null && $value !== '') {
-        try {
-            $dateValue = \Carbon\Carbon::parse($value)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            $dateValue = '';
-        }
-    }
+    // re-rendered form. DateFormatter::format guards Carbon::parse → never throws.
+    // Fall back to '' — a <input type=date> can only display a Y-m-d string.
+    $dateValue = \BlackParadise\LaravelAdminBladeUI\Support\DateFormatter::format($value, 'Y-m-d') ?? '';
 @endphp
 
 <input type="date"

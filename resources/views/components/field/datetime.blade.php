@@ -3,17 +3,10 @@
     $inputName     = $name ?? $field->name();
     $inputErrorKey = $errorKey ?? $field->name();
     // Bug #13 (datetime twin): $value may be a rejected old() input (e.g.
-    // "not-a-date") on a re-rendered form. Carbon::parse() throws on garbage → 500.
-    // Guard it and fall back to '' — <input type=datetime-local> can only display
+    // "not-a-date") on a re-rendered form. DateFormatter::format guards Carbon::parse
+    // → never throws. Fall back to '' — <input type=datetime-local> can only display
     // a Y-m-d\TH:i string.
-    $dateValue = '';
-    if ($value !== null && $value !== '') {
-        try {
-            $dateValue = \Carbon\Carbon::parse($value)->format('Y-m-d\TH:i');
-        } catch (\Throwable $e) {
-            $dateValue = '';
-        }
-    }
+    $dateValue = \BlackParadise\LaravelAdminBladeUI\Support\DateFormatter::format($value, 'Y-m-d\TH:i') ?? '';
 @endphp
 
 <input type="datetime-local"

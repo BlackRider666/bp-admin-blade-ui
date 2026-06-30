@@ -34,51 +34,14 @@
                     @if($field instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField && $field->isEmbedded())
                         @php
                             $embeddedDefClass = $field->embeddedDefinition();
-                            $hostModelClass   = $definition->model ?? null;
-
-                            // Core decorates sub-fields with options (filter + FK-skip already done)
-                            // when a RelationOptionsProvider is injected. Use that if available.
-                            // Fallback: instantiate the definition ourselves and apply the same
-                            // visibleOnForm + FK-to-host filters that core would apply.
-                            $embeddedDef    = new $embeddedDefClass();
-                            $embeddedFields = $field->meta()['embeddedFields'] ?? null;
-                            if ($embeddedFields === null) {
-                                $embeddedFields = array_values(array_filter(
-                                    $embeddedDef->fields(),
-                                    function ($f) use ($hostModelClass) {
-                                        if (!$f->visibleOnForm()) {
-                                            return false;
-                                        }
-                                        // skip FK back to host — auto-assigned on save
-                                        if ($hostModelClass
-                                            && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
-                                            && $f->relationKind() === 'belongsTo'
-                                            && $f->target() === $hostModelClass) {
-                                            return false;
-                                        }
-                                        return true;
-                                    },
-                                ));
-                            } else {
-                                // FK-skip remains in Blade because only Blade knows $hostModelClass
-                                $embeddedFields = array_values(array_filter(
-                                    $embeddedFields,
-                                    function ($f) use ($hostModelClass) {
-                                        if ($hostModelClass
-                                            && $f instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractRelationField
-                                            && $f->relationKind() === 'belongsTo'
-                                            && $f->target() === $hostModelClass) {
-                                            return false;
-                                        }
-                                        return true;
-                                    },
-                                ));
-                            }
-
-                            $relationKind   = $field->relationKind();
-                            $isMany         = in_array($relationKind, ['hasMany', 'morphMany', 'belongsToMany'], true);
-                            $embeddedPrefix = $field->name();
-                            $oldItems       = old($embeddedPrefix);
+                            $embeddedDef      = new $embeddedDefClass();
+                            // Core (Task 2.2) always supplies embeddedFields pre-filtered by
+                            // visibleOnForm() + !pointsBackTo(host); read it directly.
+                            $embeddedFields   = $field->meta()['embeddedFields'] ?? [];
+                            $relationKind     = $field->relationKind();
+                            $isMany           = in_array($relationKind, ['hasMany', 'morphMany', 'belongsToMany'], true);
+                            $embeddedPrefix   = $field->name();
+                            $oldItems         = old($embeddedPrefix);
                         @endphp
                         <fieldset class="border border-bp-border-soft rounded-xl p-4 mb-4">
                             <legend class="text-sm font-medium text-bp-gray-500 px-2">{{ $field->label() }}</legend>

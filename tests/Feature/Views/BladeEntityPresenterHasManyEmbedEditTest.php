@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace BlackParadise\LaravelAdminBladeUI\Tests\Feature\Views;
 
+use BlackParadise\CoreAdmin\Application\UseCases\Entity\BuildFormViewUseCase;
+use BlackParadise\CoreAdmin\Domain\Contracts\Auth\AuthorizationProviderContract;
+use BlackParadise\CoreAdmin\Domain\Contracts\EntityDefinition\EntityDefinitionContract;
 use BlackParadise\CoreAdmin\Domain\Entity\EntityRecord;
 use BlackParadise\LaravelAdmin\Core\EntityDefinitionRegistry;
 use BlackParadise\LaravelAdminBladeUI\Http\Presenters\BladeEntityPresenter;
@@ -53,7 +56,17 @@ final class BladeEntityPresenterHasManyEmbedEditTest extends TestCase
             ],
         );
 
-        $response = $this->presenter->edit($record, $this->definition->fields(), $this->definition);
+        $useCase = new BuildFormViewUseCase(
+            authorizationProvider: new class implements AuthorizationProviderContract {
+                public function can(string $action, EntityDefinitionContract $entityDefinition): bool
+                {
+                    return true;
+                }
+            },
+            entityDefinition: $this->definition,
+        );
+
+        $response = $this->presenter->edit($record, $useCase->execute('update'), $this->definition);
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         $body = (string) $response->getContent();
@@ -83,7 +96,17 @@ final class BladeEntityPresenterHasManyEmbedEditTest extends TestCase
             ['historyItems' => []],
         );
 
-        $response = $this->presenter->edit($record, $this->definition->fields(), $this->definition);
+        $useCase = new BuildFormViewUseCase(
+            authorizationProvider: new class implements AuthorizationProviderContract {
+                public function can(string $action, EntityDefinitionContract $entityDefinition): bool
+                {
+                    return true;
+                }
+            },
+            entityDefinition: $this->definition,
+        );
+
+        $response = $this->presenter->edit($record, $useCase->execute('update'), $this->definition);
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         $body = (string) $response->getContent();

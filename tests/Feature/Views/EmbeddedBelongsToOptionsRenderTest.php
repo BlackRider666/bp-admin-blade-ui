@@ -7,11 +7,13 @@ namespace BlackParadise\LaravelAdminBladeUI\Tests\Feature\Views;
 use BlackParadise\CoreAdmin\Domain\Fields\BelongsToField;
 use BlackParadise\CoreAdmin\Domain\Fields\HasManyField;
 use BlackParadise\CoreAdmin\Domain\Fields\TextField;
+use BlackParadise\LaravelAdmin\EntityDefinition;
 use BlackParadise\LaravelAdminBladeUI\Http\Presenters\BladeEntityPresenter;
 use BlackParadise\LaravelAdminBladeUI\Tests\Fixtures\StubJournalDefinition;
+use BlackParadise\LaravelAdminBladeUI\Tests\Fixtures\StubJournalHistoryDefinition;
 use BlackParadise\LaravelAdminBladeUI\Tests\Fixtures\StubModel;
+use BlackParadise\LaravelAdminBladeUI\Tests\Fixtures\Tag;
 use BlackParadise\LaravelAdminBladeUI\Tests\TestCase;
-use BlackParadise\LaravelAdmin\EntityDefinition;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -121,16 +123,19 @@ final class EmbeddedBelongsToOptionsRenderTest extends TestCase
         self::assertStringContainsString('bpRepeater', $body);
     }
 
-    public function test_create_falls_back_gracefully_when_no_embedded_fields_in_meta(): void
+    public function test_create_renders_only_fields_from_meta_not_embedded_definition_fields(): void
     {
-        // When meta()['embeddedFields'] is absent, the view should instantiate
-        // the definition itself and apply visibleOnForm filter — the fallback path.
+        // Post Task 2.3 IMPL, the view reads ONLY meta()['embeddedFields'] supplied by Core.
+        // Fields defined in the embedded definition class that are absent from meta must NOT
+        // appear in the rendered output.
+        //
+        // This test documents the new contract and guards against regression to the old fallback.
         $definition = new class extends EntityDefinition {
             public string $model = StubModel::class;
 
             public function resolveName(): string
             {
-                return 'stub_fallback_embedded';
+                return 'stub_meta_only_contract';
             }
 
             public function fields(): array
@@ -139,22 +144,25 @@ final class EmbeddedBelongsToOptionsRenderTest extends TestCase
             }
         };
 
-        // Container field WITHOUT meta()['embeddedFields'] — triggers fallback.
-        $hasManyField = HasManyField::make('histories', StubModel::class)
-            ->withRelationName('historyItems')
-            ->embed(StubJournalDefinition::class)
+        // meta provides ONLY 'title' — deliberately excludes 'period' and 'events'
+        // which StubJournalHistoryDefinition::fields() would supply via the old fallback.
+        $titleField = TextField::make('title')->required();
+        $hasManyField = HasManyField::make('journals', StubModel::class)
+            ->withRelationName('journals')
+            ->embed(StubJournalHistoryDefinition::class)
             ->strategy('merge');
 
-        // No withMeta(['embeddedFields' => ...]) call — meta()['embeddedFields'] is absent.
-        $fields = [TextField::make('name'), $hasManyField];
+        $hasManyField->withMeta(['embeddedFields' => [$titleField]]);
 
-        $response = $this->presenter->create($fields, $definition);
+        $response = $this->presenter->create([$hasManyField], $definition);
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         $body = (string) $response->getContent();
 
-        // Fallback renders the definition's own fields (StubJournalDefinition has 'issn_print' and 'histories').
-        // The create page must not crash and must contain the repeater container.
+        // The repeater must render (meta path is active).
         self::assertStringContainsString('bpRepeater', $body);
+
+        // 'period' is in StubJournalHistoryDefinition::fields() but NOT in meta — must not appear.
+        self::assertStringNotContainsString('name="journals[__ROW__][period]"', $body);
     }
 }
