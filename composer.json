@@ -11,7 +11,8 @@
     ],
     "require": {
         "php": "^8.2",
-        "black-paradise/laravel-admin": "^3.0"
+        "black-paradise/laravel-admin": "^3.1",
+        "black-paradise/core-admin": "^1.1"
     },
     "autoload": {
         "psr-4": {

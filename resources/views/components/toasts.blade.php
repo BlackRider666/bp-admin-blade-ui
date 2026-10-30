@@ -1,6 +1,7 @@
 @php
     $flash = [];
     if (session('success')) $flash[] = ['kind' => 'success', 'msg' => session('success')];
+    if (session('info'))    $flash[] = ['kind' => 'info',    'msg' => session('info')];
     if (session('warning')) $flash[] = ['kind' => 'warning', 'msg' => session('warning')];
     if (session('error'))   $flash[] = ['kind' => 'error',   'msg' => session('error')];
     foreach ($errors->all() as $err) $flash[] = ['kind' => 'error', 'msg' => $err];

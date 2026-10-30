@@ -25,7 +25,14 @@
                 records.
             </p>
         </div>
-        @if($definition->isCreatable())
+        <div class="flex items-center gap-2 flex-wrap">
+        @foreach($ui->entityActions as $entityAction)
+            @include('bpadmin::components.action-button', ['action' => $entityAction, 'scope' => 'entity', 'url' => $entityAction->url])
+            @if($entityAction->hasForm)
+                @include('bpadmin::components.action-modal', ['action' => $entityAction, 'scope' => 'entity', 'url' => $entityAction->url])
+            @endif
+        @endforeach
+        @if($ui->canCreate)
         <a href="{{ route('bpadmin.entity.create', ['entity' => $definition->name()]) }}"
            data-bp-new
            title="Press N to create"
@@ -37,6 +44,7 @@
             <kbd class="hidden sm:inline-flex items-center rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono-bp">N</kbd>
         </a>
         @endif
+        </div>
     </div>
 
     @include('bpadmin::components.table', [
@@ -44,6 +52,7 @@
         'records'          => $records,
         'paginated'        => $paginated,
         'definition'       => $definition,
+        'ui'               => $ui,
         'searchable'       => count($definition->searchFields()) > 0,
         'currentQ'         => request('q', ''),
         'currentSort'      => request('sort_by', ''),

@@ -1,5 +1,5 @@
 @props([
-    'fields', 'records', 'paginated', 'definition',
+    'fields', 'records', 'paginated', 'definition', 'ui',
     'searchable'       => false,
     'currentQ'         => '',
     'currentSort'      => '',
@@ -14,6 +14,8 @@
     $perPageOptions = [10, 15, 25, 50, 100];
     $activeFilterCount = count(array_filter((array)$currentFilters));
     $selectedId = 'bp-sel-' . $definition->name();
+    $showBulk   = $ui->showBulkBar();
+    $colCount   = count($fields) + 1 + ($showBulk ? 1 : 0);
 @endphp
 
 {{-- Toolbar --}}
@@ -115,10 +117,10 @@
 @endif
 
 {{-- Bulk action bar --}}
-<div x-data="bpBulkSelect()"
-     x-ref="bulk"
+<div @if($showBulk) x-data="bpBulkSelect()" x-ref="bulk" @endif
      class="relative">
 
+    @if($showBulk)
     <div x-show="selected.length > 0" x-cloak x-transition
          class="sticky top-0 z-10 mb-3 flex items-center gap-3 rounded-xl border border-bp-primary/40 bg-bp-primary/10 px-4 py-2.5 text-sm backdrop-blur">
         <span class="inline-flex items-center gap-1.5 text-bp-primary font-semibold">
@@ -127,6 +129,13 @@
         </span>
         <button @click="clear()" class="text-xs uppercase tracking-wider text-bp-muted hover:text-bp-gray-800 transition-colors">Clear</button>
         <div class="ml-auto flex items-center gap-2">
+            @foreach($ui->bulkActions as $bulkAction)
+                @include('bpadmin::components.action-button', ['action' => $bulkAction, 'scope' => 'bulk', 'url' => $bulkAction->url, 'variant' => 'button'])
+                @if($bulkAction->hasForm)
+                    @include('bpadmin::components.action-modal', ['action' => $bulkAction, 'scope' => 'bulk', 'url' => $bulkAction->url])
+                @endif
+            @endforeach
+            @if($ui->canBulkDelete)
             <form method="POST"
                   x-ref="bulkForm"
                   action="{{ route('bpadmin.entity.bulk-destroy', ['entity' => $definition->name()]) }}">
@@ -147,8 +156,10 @@
                     Delete <span x-text="selected.length"></span>
                 </button>
             </form>
+            @endif
         </div>
     </div>
+    @endif
 
     {{-- Table --}}
     <div class="relative overflow-hidden rounded-2xl border border-bp-border bg-bp-surface shadow-card">
@@ -157,6 +168,7 @@
             <table class="min-w-full text-sm">
                 <thead>
                     <tr class="border-b border-bp-border bg-bp-surface-2/40">
+                        @if($showBulk)
                         <th class="w-10 pl-5 pr-2 py-3.5">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox"
@@ -165,6 +177,7 @@
                                        :checked="allSelected">
                             </label>
                         </th>
+                        @endif
                         @foreach($fields as $field)
                             <th class="px-5 py-3.5 text-left text-[11px] font-bold text-bp-muted uppercase tracking-[0.12em] whitespace-nowrap">
                                 @if($field->isSortable())
@@ -200,38 +213,43 @@
                                 @endif
                             </th>
                         @endforeach
-                        <th class="px-5 py-3.5 text-right text-[11px] font-bold text-bp-muted uppercase tracking-[0.12em]">Actions</th>
+                        <th data-bp-row-controls class="px-5 py-3.5 text-right text-[11px] font-bold text-bp-muted uppercase tracking-[0.12em]">{{ __('bpadmin::common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($records as $record)
                         @php $rid = (string) $record->id(); @endphp
                         <tr class="border-b border-bp-border/40 last:border-0 transition-colors"
-                            :class="selected.includes('{{ $rid }}') ? 'bg-bp-primary/5' : ''">
+                            @if($showBulk) :class="selected.includes({{ \Illuminate\Support\Js::from($rid) }}) ? 'bg-bp-primary/5' : ''" @endif>
+                            @if($showBulk)
                             <td class="w-10 pl-5 pr-2 py-4">
                                 <label class="inline-flex items-center cursor-pointer">
                                     <input type="checkbox"
                                            class="bp-checkbox"
                                            value="{{ $rid }}"
-                                           @change="toggle('{{ $rid }}', $event.target.checked)"
-                                           :checked="selected.includes('{{ $rid }}')">
+                                           @change="toggle({{ \Illuminate\Support\Js::from($rid) }}, $event.target.checked)"
+                                           :checked="selected.includes({{ \Illuminate\Support\Js::from($rid) }})">
                                 </label>
                             </td>
+                            @endif
                             @foreach($fields as $field)
                                 <td class="px-5 py-4 text-bp-gray-700 align-middle">
                                     @include('bpadmin::components.field-display', ['field' => $field, 'record' => $record])
                                 </td>
                             @endforeach
-                            <td class="px-5 py-4 text-right">
+                            <td data-bp-row-controls class="px-5 py-4 text-right">
                                 <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('bpadmin.entity.show', ['entity' => $definition->name(), 'id' => $rid]) }}"
                                        class="p-2 rounded-lg text-bp-muted hover:text-bp-gray-900 hover:bg-white/5 transition-colors" title="View">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><use href="#bp-i-view"/></svg>
                                     </a>
+                                    @if($ui->canUpdate)
                                     <a href="{{ route('bpadmin.entity.edit', ['entity' => $definition->name(), 'id' => $rid]) }}"
                                        class="p-2 rounded-lg text-bp-primary/70 hover:text-bp-primary hover:bg-bp-primary/10 transition-colors" title="Edit">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><use href="#bp-i-edit"/></svg>
                                     </a>
+                                    @endif
+                                    @if($ui->canDelete)
                                     <form method="POST"
                                           action="{{ route('bpadmin.entity.destroy', ['entity' => $definition->name(), 'id' => $rid]) }}">
                                         @csrf
@@ -239,7 +257,7 @@
                                         <button type="button"
                                                 @click="$store.confirm.ask({
                                                     title: 'Delete this record?',
-                                                    message: 'Record #{{ $rid }} will be permanently removed. This action cannot be undone.',
+                                                    message: {{ \Illuminate\Support\Js::from('Record #' . $rid . ' will be permanently removed. This action cannot be undone.') }},
                                                     confirmText: 'Delete',
                                                     danger: true,
                                                     onConfirm: () => $el.closest('form').submit(),
@@ -248,12 +266,16 @@
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><use href="#bp-i-trash"/></svg>
                                         </button>
                                     </form>
+                                    @endif
+                                    @if($ui->rowActions !== [])
+                                    @include('bpadmin::components.row-actions', ['rowId' => $rid, 'definition' => $definition, 'ui' => $ui])
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ count($fields) + 2 }}" class="px-5 py-20 text-center">
+                            <td colspan="{{ $colCount }}" class="px-5 py-20 text-center">
                                 <div class="flex flex-col items-center gap-4 text-bp-muted">
                                     <div class="relative h-16 w-16">
                                         <div class="absolute inset-0 rounded-2xl bg-bp-primary/10 blur-xl"></div>
@@ -279,7 +301,7 @@
                                             @endif
                                         </p>
                                     </div>
-                                    @if(!$currentQ && $activeFilterCount === 0)
+                                    @if($ui->canCreate && !$currentQ && $activeFilterCount === 0)
                                         <a href="{{ route('bpadmin.entity.create', ['entity' => $definition->name()]) }}"
                                            class="bp-btn-primary inline-flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-xl mt-1">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>

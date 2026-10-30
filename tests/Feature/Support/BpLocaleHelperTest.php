@@ -49,4 +49,36 @@ final class BpLocaleHelperTest extends TestCase
         app()->setLocale('de');
         self::assertSame('de', bp_locale());
     }
+
+    /**
+     * No function-static provider cache: a provider rebound in the container
+     * (Octane request boundary / test swap) must be honoured on the next call.
+     */
+    public function test_bp_locale_resolves_provider_from_container_on_every_call(): void
+    {
+        $make = static fn(string $locale): \BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract => new class ($locale) implements \BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract {
+            public function __construct(private readonly string $locale) {}
+
+            public function availableLocales(): array
+            {
+                return [$this->locale];
+            }
+
+            public function defaultLocale(): string
+            {
+                return $this->locale;
+            }
+
+            public function currentLocale(): string
+            {
+                return $this->locale;
+            }
+        };
+
+        app()->instance(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class, $make('aa'));
+        self::assertSame('aa', bp_locale());
+
+        app()->instance(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class, $make('bb'));
+        self::assertSame('bb', bp_locale());
+    }
 }

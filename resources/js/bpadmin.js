@@ -198,7 +198,9 @@ function register(A) {
       rows.appendChild(node)
       this.index++
       const focusable = node.querySelector('input:not([type=hidden]),textarea,select')
-      if (focusable) focusable.focus()
+      // Defer until Alpine has initialised the cloned subtree (its MutationObserver does so on
+      // appendChild); a manual tree init here would initialise the relation select twice (A17).
+      if (focusable) this.$nextTick(() => focusable.focus())
     },
   }))
 

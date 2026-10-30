@@ -5,9 +5,10 @@
     $inputErrorKey  = $errorKey ?? $field->name();
     $localeProvider = app(\BlackParadise\CoreAdmin\Domain\Contracts\LocaleProviderContract::class);
     $locales        = $localeProvider->availableLocales();
-    $defaultLocale  = bp_locale();
+    $defaultLocale  = $localeProvider->currentLocale();
     $translations   = is_array($value) ? $value : (is_string($value) ? (json_decode($value, true) ?? []) : []);
-    $innerType      = method_exists($field, 'innerType') ? $field->innerType() : 'text';
+    $innerType      = $field->innerType();
+    $fieldLabel     = $field->label();
     // Deterministic id derived from the full input NAME (not field->name()), so each
     // repeater row gets a distinct id and __ROW__ substitutes correctly on clone.
     $componentId    = 'translatable-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $inputName);
@@ -24,13 +25,13 @@
     @endonce
 @endif
 
-<div x-data="{ activeTab: '{{ $defaultLocale }}' }" id="{{ $componentId }}">
+<div x-data="{ activeTab: @js($defaultLocale) }" id="{{ $componentId }}">
     {{-- Locale tabs --}}
     <div class="flex gap-1 mb-2 border-b border-bp-border">
         @foreach($locales as $locale)
             <button type="button"
-                    @click="activeTab = '{{ $locale }}'"
-                    :class="activeTab === '{{ $locale }}'
+                    @click="activeTab = @js($locale)"
+                    :class="activeTab === @js($locale)
                         ? 'border-bp-primary text-bp-primary'
                         : 'border-transparent text-bp-gray-400 hover:text-bp-gray-600'"
                     class="px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors uppercase">
@@ -41,13 +42,13 @@
 
     {{-- Input per locale --}}
     @foreach($locales as $locale)
-        <div x-show="activeTab === '{{ $locale }}'" x-cloak>
+        <div x-show="activeTab === @js($locale)" x-cloak>
             @if($innerType === 'editor')
                 @php
                     $editorId     = $componentId . '-editor-' . $locale;
                     $editorValue  = old($inputErrorKey . '.' . $locale, $translations[$locale] ?? '');
                 @endphp
-                <div x-data="bpQuill(@js($editorValue))" x-init="init('{{ $editorId }}')">
+                <div x-data="bpQuill(@js($editorValue))" x-init="init(@js($editorId))">
                     <input type="hidden"
                            id="{{ $editorId }}-input"
                            name="{{ $inputName }}[{{ $locale }}]"
@@ -60,7 +61,7 @@
                        id="{{ $inputName }}_{{ $locale }}"
                        name="{{ $inputName }}[{{ $locale }}]"
                        value="{{ old($inputErrorKey . '.' . $locale, $translations[$locale] ?? '') }}"
-                       placeholder="{{ $field->label() }} ({{ strtoupper($locale) }})"
+                       placeholder="{{ $fieldLabel }} ({{ strtoupper($locale) }})"
                        class="block w-full rounded-xl border border-bp-border bg-bp-surface px-3 py-2 text-sm text-bp-gray-500 focus:border-bp-primary focus:ring-1 focus:ring-bp-primary focus:outline-none @error($inputErrorKey . '.' . $locale) border-red-300 @enderror">
             @endif
 

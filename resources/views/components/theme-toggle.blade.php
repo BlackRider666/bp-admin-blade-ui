@@ -1,6 +1,6 @@
 <button type="button"
         @click="$store.ui.toggleTheme()"
-        :title="$store.ui.theme === 'dark' ? '{{ __('bpadmin::ui.switch_to_light') }}' : '{{ __('bpadmin::ui.switch_to_dark') }}'"
+        :title="$store.ui.theme === 'dark' ? @js(__('bpadmin::ui.switch_to_light')) : @js(__('bpadmin::ui.switch_to_dark'))"
         aria-label="Toggle theme"
         class="inline-flex items-center justify-center h-10 w-10 rounded-xl bp-btn-ghost">
     {{-- Sun icon — visible when current theme is dark (clicking switches to light) --}}

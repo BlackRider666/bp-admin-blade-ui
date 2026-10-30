@@ -38,7 +38,15 @@
             </h1>
             <p class="text-sm text-bp-muted mt-1">View all fields for this record.</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            @foreach($ui->rowActions as $rowAction)
+                @php $rowActionUrl = route('bpadmin.entity.action.row', ['entity' => $definition->name(), 'id' => $record->id(), 'action' => $rowAction->name]); @endphp
+                @include('bpadmin::components.action-button', ['action' => $rowAction, 'scope' => 'row', 'rowId' => $record->id(), 'url' => $rowActionUrl])
+                @if($rowAction->hasForm)
+                    @include('bpadmin::components.action-modal', ['action' => $rowAction, 'scope' => 'row', 'rowId' => $record->id(), 'url' => $rowActionUrl])
+                @endif
+            @endforeach
+            @if($ui->canUpdate)
             <a href="{{ route('bpadmin.entity.edit', ['entity' => $definition->name(), 'id' => $record->id()]) }}"
                class="bp-btn-ghost inline-flex items-center gap-2 text-sm font-medium py-2 px-4 rounded-xl">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,6 +55,8 @@
                 </svg>
                 Edit
             </a>
+            @endif
+            @if($ui->canDelete)
             <form method="POST"
                   action="{{ route('bpadmin.entity.destroy', ['entity' => $definition->name(), 'id' => $record->id()]) }}">
                 @csrf
@@ -67,6 +77,7 @@
                     Delete
                 </button>
             </form>
+            @endif
         </div>
     </div>
 

@@ -136,18 +136,14 @@ if (!function_exists('bp_relation_label')) {
 
 if (!function_exists('bp_locale')) {
     /**
-     * Current admin locale with a per-process provider cache.
+     * Current admin locale.
      *
-     * The provider instance is container-resolved once; currentLocale() itself
-     * stays live (locale switcher). NOTE: static provider ref is fine under
-     * FPM; revisit if the host app moves to Octane.
+     * The provider is resolved from the container on every call (no function-static
+     * cache), so it never goes stale under Octane / test container swaps.
      */
     function bp_locale(): string
     {
-        static $provider = null;
-        $provider ??= resolve(LocaleProviderContract::class);
-
-        return $provider->currentLocale();
+        return resolve(LocaleProviderContract::class)->currentLocale();
     }
 }
 

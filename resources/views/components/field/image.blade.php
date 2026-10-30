@@ -26,6 +26,12 @@
            accept="image/*"
            @change="preview = URL.createObjectURL($event.target.files[0])"
            class="block w-full text-sm text-bp-gray-600 cursor-pointer rounded-xl border border-bp-border-soft bg-bp-input-bg file:mr-4 file:py-2.5 file:px-4 file:border-0 file:cursor-pointer file:text-xs file:font-semibold file:uppercase file:tracking-wider file:bg-bp-primary/10 file:text-bp-primary hover:file:bg-bp-primary/20 file:transition-colors">
+    @if($value && !in_array('required', $field->rules(), true) && !($field instanceof \BlackParadise\CoreAdmin\Domain\Fields\Base\AbstractField && $field->isRequiredOnCreate()))
+        <label class="mt-2 inline-flex items-center gap-2 text-xs text-bp-muted cursor-pointer">
+            <input type="checkbox" name="{{ $inputName }}__clear" value="1" class="bp-checkbox">
+            {{ __('bpadmin::common.files.remove') }}
+        </label>
+    @endif
     @if($value)
         <p class="mt-1.5 text-xs text-bp-muted">Upload a new image to replace the current one.</p>
     @endif
